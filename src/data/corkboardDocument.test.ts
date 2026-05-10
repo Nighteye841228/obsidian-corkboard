@@ -13,7 +13,7 @@ describe("CorkboardDocument.parse", () => {
 		const d = CorkboardDocument.parse(VALID);
 		expect(d.error).toBeNull();
 		expect(d.data.cards.length).toBe(1);
-		expect(d.data.cards[0].path).toBe("a.md");
+		expect(d.data.cards[0]!.path).toBe("a.md");
 	});
 
 	it("returns empty doc + error on invalid JSON", () => {
@@ -64,7 +64,7 @@ describe("CorkboardDocument mutations", () => {
 	it("renameCardPath updates the path in place", () => {
 		const d = CorkboardDocument.parse(VALID);
 		d.renameCardPath("a.md", "b.md");
-		expect(d.data.cards[0].path).toBe("b.md");
+		expect(d.data.cards[0]!.path).toBe("b.md");
 	});
 
 	it("reorder moves an item from one index to another", () => {
@@ -79,9 +79,9 @@ describe("CorkboardDocument mutations", () => {
 	it("update mutates a card in place", () => {
 		const d = CorkboardDocument.parse(VALID);
 		d.update(0, { synopsis: "new", status: "draft" });
-		expect(d.data.cards[0].synopsis).toBe("new");
-		expect(d.data.cards[0].status).toBe("draft");
-		expect(d.data.cards[0].path).toBe("a.md");
+		expect(d.data.cards[0]!.synopsis).toBe("new");
+		expect(d.data.cards[0]!.status).toBe("draft");
+		expect(d.data.cards[0]!.path).toBe("a.md");
 	});
 
 	it("setCardSize updates dimensions", () => {

@@ -53,13 +53,15 @@ export class CorkboardDocument {
 		if (from === to) return;
 		if (from < 0 || from >= this.data.cards.length) return;
 		if (to < 0 || to >= this.data.cards.length) return;
-		const [item] = this.data.cards.splice(from, 1);
+		const item = this.data.cards.splice(from, 1)[0];
+		if (!item) return;
 		this.data.cards.splice(to, 0, item);
 	}
 
 	update(index: number, patch: Partial<CorkboardCard>): void {
-		if (index < 0 || index >= this.data.cards.length) return;
-		Object.assign(this.data.cards[index], patch);
+		const card = this.data.cards[index];
+		if (!card) return;
+		Object.assign(card, patch);
 	}
 
 	setCardSize(width: number, height: number): void {

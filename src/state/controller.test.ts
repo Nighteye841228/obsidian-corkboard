@@ -29,7 +29,7 @@ describe("CorkboardController", () => {
     await c.createCard();
     expect(gw.create).toHaveBeenCalledTimes(1);
     expect(doc.data.cards.length).toBe(1);
-    expect(doc.data.cards[0].path).toBe("novel/Untitled-1.md");
+    expect(doc.data.cards[0]!.path).toBe("novel/Untitled-1.md");
     expect(onChange).toHaveBeenCalled();
   });
 
@@ -39,7 +39,7 @@ describe("CorkboardController", () => {
     await gw.create!("novel/Untitled-1.md", "");
     const c = new CorkboardController({ doc, folderPath: "novel", gateway: gw, onChange: () => {} });
     await c.createCard();
-    expect(doc.data.cards[0].path).toBe("novel/Untitled-2.md");
+    expect(doc.data.cards[0]!.path).toBe("novel/Untitled-2.md");
   });
 
   it("removeCardByPath removes the card", async () => {
@@ -64,7 +64,7 @@ describe("CorkboardController", () => {
     const doc = CorkboardDocument.parse(`{"version":1,"cardWidth":280,"cardHeight":180,"cards":[{"path":"a.md","synopsis":"old","status":"todo","color":null}]}`);
     const c = new CorkboardController({ doc, folderPath: "", gateway: makeGateway(), onChange: () => {} });
     c.updateSynopsis(0, "new");
-    expect(doc.data.cards[0].synopsis).toBe("new");
+    expect(doc.data.cards[0]!.synopsis).toBe("new");
   });
 
   it("writeSynopsisToMd calls gateway.process with composed content", async () => {
