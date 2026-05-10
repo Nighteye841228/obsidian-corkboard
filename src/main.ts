@@ -1,4 +1,4 @@
-import { Plugin, TFile, TFolder, TAbstractFile, Notice, WorkspaceLeaf } from "obsidian";
+import { Plugin, TFile, TFolder, TAbstractFile, Menu, Notice, WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_CORKBOARD, FILE_EXT_CORKBOARD, CORKBOARD_FILE_NAME } from "./constants";
 import type { CorkboardSettings } from "./types";
 import { mergeSettings } from "./settings/settings";
@@ -56,18 +56,24 @@ export default class CorkboardPlugin extends Plugin {
       callback: async () => {
         const af = this.app.workspace.getActiveFile();
         const folder = af ? folderOf(af.path) : "";
-        const path = folder === "" ? CORKBOARD_FILE_NAME : `${folder}/${CORKBOARD_FILE_NAME}`;
-        if (this.app.vault.getAbstractFileByPath(path)) {
-          new Notice("This folder already has a corkboard.");
-          return;
-        }
-        // Pre-populate with cards for any md files already in the folder.
-        const initialJson = serializeInitialData(this.listFolderMd(folder));
-        await this.app.vault.create(path, initialJson);
-        const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof TFile) await this.app.workspace.getLeaf("tab").openFile(file);
+        await this.createCorkboardForFolder(folder);
       },
     });
+
+    // Add "Create corkboard" entry to a folder's right-click menu.
+    this.registerEvent(this.app.workspace.on("file-menu", (menu: Menu, file: TAbstractFile) => {
+      if (!(file instanceof TFolder)) return;
+      const corkboardPath = file.path === "" ? CORKBOARD_FILE_NAME : `${file.path}/${CORKBOARD_FILE_NAME}`;
+      const exists = this.app.vault.getAbstractFileByPath(corkboardPath) instanceof TFile;
+      menu.addItem(item => {
+        item.setTitle("Create corkboard").setIcon("layout-grid");
+        if (exists) {
+          item.setDisabled(true);
+        } else {
+          item.onClick(async () => { await this.createCorkboardForFolder(file.path); });
+        }
+      });
+    }));
 
     this.addSettingTab(new CorkboardSettingTab(this.app, this));
   }
@@ -76,6 +82,24 @@ export default class CorkboardPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+  }
+
+  /**
+   * Create an `index.corkboard` for the given folder (vault-relative path,
+   * or empty string for the vault root). Pre-populates with cards for any
+   * md files already in the folder. No-op (with a Notice) if the folder
+   * already has a corkboard.
+   */
+  private async createCorkboardForFolder(folderPath: string): Promise<void> {
+    const path = folderPath === "" ? CORKBOARD_FILE_NAME : `${folderPath}/${CORKBOARD_FILE_NAME}`;
+    if (this.app.vault.getAbstractFileByPath(path)) {
+      new Notice("This folder already has a corkboard.");
+      return;
+    }
+    const initialJson = serializeInitialData(this.listFolderMd(folderPath));
+    await this.app.vault.create(path, initialJson);
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (file instanceof TFile) await this.app.workspace.getLeaf("tab").openFile(file);
   }
 
   private listFolderMd(folderPath: string): string[] {
