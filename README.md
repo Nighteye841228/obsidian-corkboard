@@ -1,90 +1,193 @@
-# Obsidian Sample Plugin
+# Obsidian Corkboard
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Scrivener-style corkboard for Obsidian. Each folder gets a single
+`index.corkboard` file that renders the folder's markdown notes as index
+cards arranged in a flowing grid.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+繁體中文：[README_zh_TW.md](./README_zh_TW.md)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## What it gives you
 
-## First time developing plugins?
+- Each card represents one `.md` file in the folder.
+- Cards show the file's title, an author-written **synopsis** (separate
+  from the file body), a **status** label, and an optional **colour**.
+- Drag to reorder, multi-select with Cmd/Shift, drag-and-drop reorder.
+- Right-click context menus on cards (write synopsis to file, change
+  status / colour, remove from corkboard, add file back, …) and on the
+  empty area (new card, add existing file).
+- Auto-sync with the file system: creating, renaming, deleting, or
+  moving `.md` files in the folder is reflected in the corkboard
+  immediately, even when the corkboard view is closed.
+- Per-corkboard card width / height, persisted with the document.
+- Customisable status labels (default: `Todo` / `Draft` / `Revision` /
+  `Done`).
+- Read-only banner with **Show raw / Reset** when the corkboard JSON is
+  corrupt — the plugin never silently overwrites a damaged file.
 
-Quick starting guide for new plugin devs:
+Desktop only.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+## Install
 
-## Releasing new releases
+While the plugin isn't on the community plugin list yet, install
+manually:
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Build it locally (see *Development* below) or download the release
+   artifacts (`main.js`, `manifest.json`, `styles.css`).
+2. Copy the three files to `<your vault>/.obsidian/plugins/corkboard/`.
+3. In Obsidian → Settings → Community plugins → enable **Corkboard**.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Quick start
 
-## Adding your plugin to the community plugin list
+The fastest path to a working corkboard:
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. **Right-click a folder** in the file explorer → **Create corkboard**.
+2. Or use the command palette: **Corkboard: Create for current folder**
+   (creates one for the folder containing the active note).
 
-## How to use
+Either entry point creates an `index.corkboard` file in that folder
+pre-populated with one card per existing `.md` file. The corkboard
+opens in a new tab.
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+## How to use it
 
-## Manually installing the plugin
+### Creating cards
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+| Action | Result |
+|---|---|
+| Right-click empty area → **New card** | Creates a new `Untitled-N.md` file in the folder and adds a card |
+| Right-click empty area → **Add existing file…** | Fuzzy-search a folder file that isn't on the board yet, add it as a card |
+| Create an `.md` directly in the file explorer | Auto-syncs as a new card at the end |
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+### Editing a card
 
-## Funding URL
+- **Click** synopsis area → type → click out (or focus another card) to
+  commit. **Esc** to cancel.
+- **Double-click the title** → inline rename. **Enter / blur** commits;
+  **Esc** cancels. The underlying file is renamed via Obsidian's
+  `fileManager.renameFile`, so backlinks update.
+- **Right-click a card** for status, colour, "Write synopsis to file",
+  "Remove from corkboard", "Rebind…".
 
-You can include funding URLs where people who use your plugin can financially support it.
+### Selection & navigation
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+| Gesture | Result |
+|---|---|
+| Click a card | Select (blue outline) |
+| Cmd/Ctrl-click | Add or remove from selection |
+| Shift-click | Range-select from the previous anchor |
+| Click empty area | Clear selection |
+| Double-click a card body | Open the underlying `.md` in a new tab |
+
+### Reorder
+
+Drag any card and release on top of another to reorder. The new order
+is persisted in `index.corkboard`.
+
+### Card menu, with multi-select
+
+If you right-click a card while multiple cards are selected, the menu
+applies to **all** selected cards — so you can change status / colour
+in batch, or remove several cards at once.
+
+### File system sync
+
+If you create / rename / delete / move a `.md` file via the file
+explorer (or another tool, while Obsidian is open), the corkboard
+catches up:
+
+- Created → new card appended.
+- Renamed → card title updates; synopsis / status / colour preserved.
+- Deleted → card is removed.
+- Moved across folders → removed from the old folder's corkboard,
+  added to the new folder's corkboard.
+
+If the plugin was disabled when a file was deleted, the orphaned card
+is shown dimmed with a red ⚠ badge. Right-click → **Remove from
+corkboard** to clean up.
+
+## Settings
+
+Settings → Community plugins → Corkboard → cog icon. The settings tab
+lets you rename the four status labels (the underlying status ids stay
+stable, so existing cards still display).
+
+## Data model
+
+Each corkboard is a JSON file at `<folder>/index.corkboard`:
 
 ```json
 {
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
-
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
+  "version": 1,
+  "cardWidth": 280,
+  "cardHeight": 180,
+  "cards": [
+    {
+      "path": "novel/ch01-opening.md",
+      "synopsis": "Protagonist meets the antagonist.",
+      "status": "draft",
+      "color": "blue"
     }
+  ]
 }
 ```
 
-## API Documentation
+`title` is derived from `path` (no separate field). Synopsis lives in
+the JSON; you can also push it into the file via right-click → **Write
+synopsis to file** (insert as the first paragraph, after frontmatter).
 
-See https://docs.obsidian.md
+## Known limits in v0.1.0
+
+- **Rebind to another file…** is a stub (shows a Notice).
+- The drag drop indicator is functional but visually minimal.
+- Sub-folders are ignored; the corkboard only shows md files in the
+  same folder as the `index.corkboard`.
+- No undo/redo within the view.
+- Mobile is not supported (`isDesktopOnly: true`).
+
+## Development
+
+Stack: TypeScript, esbuild, Preact (automatic JSX runtime), Vitest +
+jsdom + @testing-library/preact for tests.
+
+```bash
+npm install
+npm run dev      # esbuild watch mode
+npm run build    # type-check + production bundle
+npm run test     # run unit + component tests
+npm run lint     # eslint with obsidianmd plugin rules
+```
+
+Source layout:
+
+```
+src/
+  main.ts                       # plugin lifecycle, registrations
+  constants.ts, types.ts
+  data/
+    corkboardDocument.ts        # parse / serialize / mutations
+    schema.ts                   # runtime validator (v1)
+    initialData.ts              # build a fresh document from a folder's md files
+  state/
+    controller.ts               # CorkboardController + VaultGateway interface
+    selectionStore.ts, dragStore.ts
+  sync/
+    vaultSync.ts                # vault events ↔ controller registry
+    pathResolver.ts, synopsisInjector.ts
+  view/
+    CorkboardView.tsx           # TextFileView + Preact mount + corrupt-JSON banner
+    components/
+      CorkboardApp.tsx, CardGrid.tsx, Card.tsx, SynopsisEditor.tsx,
+      Toolbar.tsx, ContextMenus.ts, AddCardModal.ts, DragLayer.tsx
+  settings/
+    settings.ts, settingsTab.ts
+  utils/
+    debounce.ts, filename.ts
+```
+
+The design spec and implementation plan live in `docs/superpowers/`.
+The manual integration test plan is `docs/superpowers/test-plan.md`.
+
+## License
+
+0BSD (matches the original Obsidian sample plugin scaffold this is
+built from).
