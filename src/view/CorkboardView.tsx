@@ -7,11 +7,15 @@ import { createDragStore, DragStore } from "../state/dragStore";
 import { VIEW_TYPE_CORKBOARD, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT } from "../constants";
 import { folderOf } from "../sync/pathResolver";
 import { CorkboardApp } from "./components/CorkboardApp";
+import type { CorkboardSettings } from "../types";
 
 export interface CorkboardViewDeps {
 	buildGateway: (folderPath: string) => VaultGateway;
 	onViewOpened: (corkboardPath: string, controller: CorkboardController) => void;
 	onViewClosed: (corkboardPath: string) => void;
+	getSettings: () => CorkboardSettings;
+	pathExists: (path: string) => boolean;
+	onRebindCard: (corkboardPath: string, cardIndex: number) => void;
 }
 
 export class CorkboardView extends TextFileView {
@@ -117,7 +121,10 @@ export class CorkboardView extends TextFileView {
 				controller={this.controller}
 				selectionStore={this.selection}
 				dragStore={this.drag}
-				openMd={(path: string) => this.openMd(path)}
+				settings={this.deps.getSettings()}
+				pathExists={this.deps.pathExists}
+				openMd={(p) => this.openMd(p)}
+				onRebindCard={(i) => this.deps.onRebindCard(this.corkboardPathRegistered!, i)}
 			/>,
 			this.contentEl,
 		);
