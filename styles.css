@@ -24,6 +24,8 @@
 	padding: 12px 0;
 	overflow: auto;
 	align-content: flex-start;
+	flex: 1;
+	min-height: 0;
 }
 
 .corkboard-card {
@@ -57,7 +59,8 @@
 	background: transparent;
 	font: inherit;
 	color: inherit;
-	padding: 4px 0;
+	padding: 2px;
+	line-height: 1.5;
 	outline: none;
 }
 .corkboard-synopsis:focus { background: var(--background-primary); }

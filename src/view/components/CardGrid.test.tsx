@@ -11,6 +11,8 @@ const noopDrag = {
 	onGridPointerMove: () => {},
 	onGridPointerUp: () => {},
 };
+const noopEmptyClick = () => {};
+const noopTitleRename = () => {};
 
 describe("<CardGrid>", () => {
 	it("renders all card slots in order", () => {
@@ -25,6 +27,8 @@ describe("<CardGrid>", () => {
 				onCardClick={() => {}} onCardDoubleClick={() => {}}
 				onCardContextMenu={() => {}} onSynopsisCommit={() => {}}
 				onEmptyContextMenu={() => {}}
+				onEmptyClick={noopEmptyClick}
+					onTitleRename={noopTitleRename}
 				{...noopDrag} />
 		);
 		expect(container.querySelectorAll(".corkboard-card").length).toBe(2);
@@ -39,10 +43,29 @@ describe("<CardGrid>", () => {
 				onCardClick={() => {}} onCardDoubleClick={() => {}}
 				onCardContextMenu={() => {}} onSynopsisCommit={() => {}}
 				onEmptyContextMenu={onEmpty}
+				onEmptyClick={noopEmptyClick}
+					onTitleRename={noopTitleRename}
 				{...noopDrag} />
 		);
 		fireEvent.contextMenu(container.querySelector(".corkboard-grid")!);
 		expect(onEmpty).toHaveBeenCalled();
+	});
+
+	it("fires onEmptyClick when clicking the empty area", () => {
+		const onEmptyClick = vi.fn();
+		const { container } = render(
+			<CardGrid cards={[]} selected={new Set()} orphans={new Set()}
+				cardWidth={200} cardHeight={120} statusLabels={{ todo: "T", draft: "D", revision: "R", done: "X" }}
+				drag={inactiveDrag}
+				onCardClick={() => {}} onCardDoubleClick={() => {}}
+				onCardContextMenu={() => {}} onSynopsisCommit={() => {}}
+				onEmptyContextMenu={() => {}}
+				onEmptyClick={onEmptyClick}
+					onTitleRename={noopTitleRename}
+				{...noopDrag} />
+		);
+		fireEvent.click(container.querySelector(".corkboard-grid")!);
+		expect(onEmptyClick).toHaveBeenCalled();
 	});
 
 	it("renders drop indicator when drag is active", () => {

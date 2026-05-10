@@ -7,6 +7,7 @@ import { CorkboardView } from "./view/CorkboardView";
 import { CorkboardSync } from "./sync/vaultSync";
 import { VaultGateway } from "./state/controller";
 import { isMarkdown, folderOf } from "./sync/pathResolver";
+import { serializeInitialData } from "./data/initialData";
 
 export default class CorkboardPlugin extends Plugin {
   settings!: CorkboardSettings;
@@ -32,6 +33,7 @@ export default class CorkboardPlugin extends Plugin {
       buildGateway: (folderPath) => this.buildGateway(folderPath),
       getSettings: () => this.settings,
       pathExists: (p) => this.app.vault.getAbstractFileByPath(p) instanceof TFile,
+      listFolderMd: (folderPath) => this.listFolderMd(folderPath),
       onViewOpened: (corkboardPath, controller) => this.sync.registerController(corkboardPath, controller),
       onViewClosed: (corkboardPath) => this.sync.unregisterController(corkboardPath),
       onRebindCard: (_corkboardPath, _i) => { new Notice("Rebind not implemented in v0.1.0"); },
@@ -59,7 +61,9 @@ export default class CorkboardPlugin extends Plugin {
           new Notice("This folder already has a corkboard.");
           return;
         }
-        await this.app.vault.create(path, "");
+        // Pre-populate with cards for any md files already in the folder.
+        const initialJson = serializeInitialData(this.listFolderMd(folder));
+        await this.app.vault.create(path, initialJson);
         const file = this.app.vault.getAbstractFileByPath(path);
         if (file instanceof TFile) await this.app.workspace.getLeaf("tab").openFile(file);
       },
@@ -74,18 +78,20 @@ export default class CorkboardPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
+  private listFolderMd(folderPath: string): string[] {
+    const f = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(f instanceof TFolder)) return [];
+    const paths: string[] = [];
+    for (const c of f.children) {
+      if (c instanceof TFile && c.extension === "md") paths.push(c.path);
+    }
+    return paths;
+  }
+
   private buildGateway(folderPath: string): VaultGateway {
     const app = this.app;
     return {
-      listFolderMd: () => {
-        const f = app.vault.getAbstractFileByPath(folderPath);
-        if (!(f instanceof TFolder)) return [];
-        const paths: string[] = [];
-        for (const c of f.children) {
-          if (c instanceof TFile && c.extension === "md") paths.push(c.path);
-        }
-        return paths;
-      },
+      listFolderMd: () => this.listFolderMd(folderPath),
       create: async (path, content) => { await app.vault.create(path, content); },
       delete: async (path) => {
         const af = app.vault.getAbstractFileByPath(path);

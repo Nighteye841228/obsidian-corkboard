@@ -14,7 +14,9 @@ export interface CardGridProps {
 	onCardDoubleClick: (index: number) => void;
 	onCardContextMenu: (index: number, evt: MouseEvent) => void;
 	onSynopsisCommit: (index: number, text: string) => void;
+	onTitleRename: (index: number, newName: string) => void;
 	onEmptyContextMenu: (evt: MouseEvent) => void;
+	onEmptyClick: () => void;
 	onCardPointerDown: (index: number, evt: PointerEvent) => void;
 	onGridPointerMove: (evt: PointerEvent) => void;
 	onGridPointerUp: (evt: PointerEvent) => void;
@@ -24,6 +26,10 @@ export function CardGrid(p: CardGridProps) {
 	return (
 		<div
 			class="corkboard-grid"
+			onClick={(e: MouseEvent) => {
+				if (e.target instanceof Element && e.target.closest(".corkboard-card")) return;
+				p.onEmptyClick();
+			}}
 			onContextMenu={(e: MouseEvent) => {
 				if (e.target instanceof Element && e.target.closest(".corkboard-card")) return;
 				e.preventDefault();
@@ -46,6 +52,7 @@ export function CardGrid(p: CardGridProps) {
 					onDoubleClick={p.onCardDoubleClick}
 					onContextMenu={p.onCardContextMenu}
 					onSynopsisCommit={p.onSynopsisCommit}
+					onTitleRename={p.onTitleRename}
 					onPointerDown={p.onCardPointerDown}
 				/>
 			))}

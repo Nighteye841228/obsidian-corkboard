@@ -1,7 +1,8 @@
-import { Menu } from "obsidian";
+import { App, Menu } from "obsidian";
 import type { CorkboardController } from "../../state/controller";
 import type { CorkboardSettings } from "../../types";
 import { COLOR_PALETTE, STATUS_IDS } from "../../constants";
+import { AddCardModal } from "./AddCardModal";
 
 export function buildCardMenu(opts: {
 	controller: CorkboardController;
@@ -61,10 +62,31 @@ export function buildCardMenu(opts: {
 	return m;
 }
 
-export function buildEmptyAreaMenu(opts: { controller: CorkboardController }): Menu {
+export function buildEmptyAreaMenu(opts: {
+	app: App;
+	controller: CorkboardController;
+	listFolderMd: () => string[];
+}): Menu {
+	const { app, controller, listFolderMd } = opts;
 	const m = new Menu();
 	m.addItem(item =>
-		item.setTitle("New card").setIcon("plus").onClick(async () => { await opts.controller.createCard(); })
+		item.setTitle("New card").setIcon("plus").onClick(async () => { await controller.createCard(); })
 	);
+
+	// Candidates: md files in the folder that are not already cards.
+	const present = new Set(controller.doc.data.cards.map(c => c.path));
+	const candidates = listFolderMd().filter(p => !present.has(p));
+	m.addItem(item => {
+		item.setTitle("Add existing file…").setIcon("link");
+		if (candidates.length === 0) {
+			item.setDisabled(true);
+		} else {
+			item.onClick(() => {
+				new AddCardModal(app, candidates, (path) => {
+					controller.appendCardForExternalFile(path);
+				}).open();
+			});
+		}
+	});
 	return m;
 }

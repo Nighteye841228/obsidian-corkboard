@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "preact/hooks";
+import type { App } from "obsidian";
 import type { CorkboardController } from "../../state/controller";
 import type { SelectionStore } from "../../state/selectionStore";
 import type { DragStore } from "../../state/dragStore";
@@ -8,13 +9,16 @@ import { CardGrid } from "./CardGrid";
 import { buildCardMenu, buildEmptyAreaMenu } from "./contextMenus";
 
 export interface CorkboardAppProps {
+	app: App;
 	controller: CorkboardController;
 	selectionStore: SelectionStore;
 	dragStore: DragStore;
 	settings: CorkboardSettings;
 	pathExists: (path: string) => boolean;
+	listFolderMd: () => string[];
 	openMd: (path: string) => void;
 	onRebindCard: (index: number) => void;
+	renameFile: (oldPath: string, newName: string) => Promise<void>;
 }
 
 export function CorkboardApp(p: CorkboardAppProps) {
@@ -75,10 +79,20 @@ export function CorkboardApp(p: CorkboardAppProps) {
 					m.showAtMouseEvent(evt);
 				}}
 				onSynopsisCommit={(i, text) => p.controller.updateSynopsis(i, text)}
+				onTitleRename={(i, newName) => {
+					const c = cards[i];
+					if (!c) return;
+					void p.renameFile(c.path, newName);
+				}}
 				onEmptyContextMenu={(evt) => {
-					const m = buildEmptyAreaMenu({ controller: p.controller });
+					const m = buildEmptyAreaMenu({
+						app: p.app,
+						controller: p.controller,
+						listFolderMd: p.listFolderMd,
+					});
 					m.showAtMouseEvent(evt);
 				}}
+				onEmptyClick={() => p.selectionStore.clear()}
 				onCardPointerDown={(i) => p.dragStore.start(i)}
 				onGridPointerMove={(evt) => {
 					if (!p.dragStore.get().active) return;

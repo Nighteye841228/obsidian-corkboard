@@ -4,8 +4,9 @@ import { CorkboardDocument } from "../data/corkboardDocument";
 import { CorkboardController, VaultGateway } from "../state/controller";
 import { createSelectionStore, SelectionStore } from "../state/selectionStore";
 import { createDragStore, DragStore } from "../state/dragStore";
-import { VIEW_TYPE_CORKBOARD, DEFAULT_CARD_WIDTH, DEFAULT_CARD_HEIGHT } from "../constants";
+import { VIEW_TYPE_CORKBOARD } from "../constants";
 import { folderOf } from "../sync/pathResolver";
+import { serializeInitialData } from "../data/initialData";
 import { CorkboardApp } from "./components/CorkboardApp";
 import type { CorkboardSettings } from "../types";
 
@@ -15,6 +16,7 @@ export interface CorkboardViewDeps {
 	onViewClosed: (corkboardPath: string) => void;
 	getSettings: () => CorkboardSettings;
 	pathExists: (path: string) => boolean;
+	listFolderMd: (folderPath: string) => string[];
 	onRebindCard: (corkboardPath: string, cardIndex: number) => void;
 }
 
@@ -29,20 +31,9 @@ export class CorkboardView extends TextFileView {
 	private originalRaw = "";          // last bytes loaded from disk
 	private corruptError: string | null = null;
 
-	private superRequestSave: () => void;
-
 	constructor(leaf: WorkspaceLeaf, deps: CorkboardViewDeps) {
 		super(leaf);
 		this.deps = deps;
-		// `requestSave` is a property (not a method) on TextFileView, so we
-		// can't override it via a subclass method. Wrap it instead so we can
-		// suppress saves while the file is in corrupt mode (defence in depth —
-		// no controller exists in that mode, so onChange never fires anyway).
-		this.superRequestSave = this.requestSave.bind(this);
-		this.requestSave = () => {
-			if (this.corruptError) return;
-			this.superRequestSave();
-		};
 	}
 
 	getViewType(): string { return VIEW_TYPE_CORKBOARD; }
@@ -80,7 +71,11 @@ export class CorkboardView extends TextFileView {
 			folderPath,
 			gateway: this.deps.buildGateway(folderPath),
 			onChange: () => {
-				this.requestSave();
+				// Force immediate save instead of relying on the 2 s requestSave debounce.
+				// Critical when the user switches tabs / closes the leaf right after a mutation.
+				if (!this.corruptError) {
+					void this.save().catch((e: unknown) => console.error("[corkboard] save failed", e));
+				}
 				this.renderApp();
 			},
 		});
@@ -116,15 +111,19 @@ export class CorkboardView extends TextFileView {
 
 	private renderApp(): void {
 		if (!this.controller || !this.selection || !this.drag) return;
+		const folderPath = this.file ? folderOf(this.file.path) : "";
 		render(
 			<CorkboardApp
+				app={this.app}
 				controller={this.controller}
 				selectionStore={this.selection}
 				dragStore={this.drag}
 				settings={this.deps.getSettings()}
 				pathExists={this.deps.pathExists}
+				listFolderMd={() => this.deps.listFolderMd(folderPath)}
 				openMd={(p) => { void this.openMd(p); }}
 				onRebindCard={(i) => this.deps.onRebindCard(this.corkboardPathRegistered!, i)}
+				renameFile={(oldPath, newName) => this.renameFile(oldPath, newName)}
 			/>,
 			this.contentEl,
 		);
@@ -133,16 +132,15 @@ export class CorkboardView extends TextFileView {
 
 	private renderError(): void {
 		const reset = async () => {
-			// Replace corrupt content with a fresh empty document.
-			const empty = JSON.stringify(
-				{ version: 1, cardWidth: DEFAULT_CARD_WIDTH, cardHeight: DEFAULT_CARD_HEIGHT, cards: [] },
-				null, 2,
-			);
+			// Replace corrupt content with a fresh document populated by the folder's
+			// current md files (so the user's existing notes are not orphaned).
+			const folderPath = this.file ? folderOf(this.file.path) : "";
+			const fresh = serializeInitialData(this.deps.listFolderMd(folderPath));
 			// Bypass our suppression — the user explicitly chose to overwrite.
 			this.corruptError = null;
-			this.originalRaw = empty;
-			if (this.file) await this.app.vault.modify(this.file, empty);
-			this.setViewData(empty, true);
+			this.originalRaw = fresh;
+			if (this.file) await this.app.vault.modify(this.file, fresh);
+			this.setViewData(fresh, true);
 		};
 		const showRaw = () => {
 			const blob = new Blob([this.originalRaw], { type: "text/plain" });
@@ -169,5 +167,21 @@ export class CorkboardView extends TextFileView {
 		if (af instanceof TFile) {
 			await this.app.workspace.getLeaf("tab").openFile(af);
 		}
+	}
+
+	/**
+	 * Rename an md file referenced by a card. The new name is the basename only
+	 * (without `.md` and without folder prefix). The vault's rename event will
+	 * propagate to the corkboard via vaultSync, updating the card path in place.
+	 */
+	private async renameFile(oldPath: string, newName: string): Promise<void> {
+		const af = this.app.vault.getAbstractFileByPath(oldPath);
+		if (!(af instanceof TFile)) return;
+		const folder = folderOf(oldPath);
+		const safe = newName.replace(/[\\/:*?"<>|]/g, "").trim();
+		if (safe === "") return;
+		const target = (folder === "" ? safe : `${folder}/${safe}`) + ".md";
+		if (target === oldPath) return;
+		await this.app.fileManager.renameFile(af, target);
 	}
 }
