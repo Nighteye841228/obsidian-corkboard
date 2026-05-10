@@ -1,5 +1,6 @@
 import type { CorkboardCard, StatusId } from "../../types";
 import { Card } from "./Card";
+import { DragLayer } from "./DragLayer";
 
 export interface CardGridProps {
 	cards: CorkboardCard[];
@@ -8,11 +9,15 @@ export interface CardGridProps {
 	cardWidth: number;
 	cardHeight: number;
 	statusLabels: Record<StatusId, string>;
+	drag: { active: boolean; fromIndex: number | null; dropTarget: number | null };
 	onCardClick: (index: number, mods: { meta: boolean; shift: boolean }) => void;
 	onCardDoubleClick: (index: number) => void;
 	onCardContextMenu: (index: number, evt: MouseEvent) => void;
 	onSynopsisCommit: (index: number, text: string) => void;
 	onEmptyContextMenu: (evt: MouseEvent) => void;
+	onCardPointerDown: (index: number, evt: PointerEvent) => void;
+	onGridPointerMove: (evt: PointerEvent) => void;
+	onGridPointerUp: (evt: PointerEvent) => void;
 }
 
 export function CardGrid(p: CardGridProps) {
@@ -24,6 +29,8 @@ export function CardGrid(p: CardGridProps) {
 				e.preventDefault();
 				p.onEmptyContextMenu(e);
 			}}
+			onPointerMove={p.onGridPointerMove}
+			onPointerUp={p.onGridPointerUp}
 		>
 			{p.cards.map((card, i) => (
 				<Card
@@ -39,8 +46,10 @@ export function CardGrid(p: CardGridProps) {
 					onDoubleClick={p.onCardDoubleClick}
 					onContextMenu={p.onCardContextMenu}
 					onSynopsisCommit={p.onSynopsisCommit}
+					onPointerDown={p.onCardPointerDown}
 				/>
 			))}
+			<DragLayer drag={p.drag} cardCount={p.cards.length} />
 		</div>
 	);
 }

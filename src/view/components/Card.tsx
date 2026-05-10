@@ -13,6 +13,7 @@ export interface CardProps {
 	onDoubleClick: (index: number) => void;
 	onContextMenu: (index: number, evt: MouseEvent) => void;
 	onSynopsisCommit: (index: number, text: string) => void;
+	onPointerDown?: (index: number, evt: PointerEvent) => void;
 }
 
 function basename(path: string): string {
@@ -35,6 +36,7 @@ export function Card(props: CardProps) {
 			onClick={(e: MouseEvent) => props.onClick(props.index, { meta: e.metaKey || e.ctrlKey, shift: e.shiftKey })}
 			onDblClick={() => props.onDoubleClick(props.index)}
 			onContextMenu={(e: MouseEvent) => { e.preventDefault(); props.onContextMenu(props.index, e); }}
+			onPointerDown={(e: PointerEvent) => props.onPointerDown?.(props.index, e)}
 		>
 			<div class="corkboard-card__title">{basename(props.card.path)}</div>
 			<div class="corkboard-card__status">{props.statusLabel}</div>
