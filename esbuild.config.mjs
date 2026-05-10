@@ -17,6 +17,9 @@ const context = await esbuild.context({
 	},
 	entryPoints: ["src/main.ts"],
 	bundle: true,
+	jsx: "automatic",
+	jsxImportSource: "preact",
+	loader: { ".tsx": "tsx", ".ts": "ts" },
 	external: [
 		"obsidian",
 		"electron",
