@@ -1,8 +1,85 @@
-/*
+.corkboard-app {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	padding: 8px;
+	box-sizing: border-box;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.corkboard-toolbar {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	padding: 4px 6px 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-size: 12px;
+}
+.corkboard-toolbar label { display: inline-flex; align-items: center; gap: 6px; }
 
-If your plugin does not need CSS, delete this file.
+.corkboard-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding: 12px 0;
+	overflow: auto;
+	align-content: flex-start;
+}
 
-*/
+.corkboard-card {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 8px;
+	display: flex;
+	flex-direction: column;
+	cursor: pointer;
+	user-select: none;
+	position: relative;
+	overflow: hidden;
+}
+.corkboard-card.is-selected { outline: 2px solid var(--interactive-accent); }
+.corkboard-card.is-orphan {
+	opacity: 0.55;
+	filter: grayscale(0.6);
+	border-color: var(--text-error);
+}
+.corkboard-card__title { font-weight: 600; margin-bottom: 4px; }
+.corkboard-card__status { font-size: 11px; opacity: 0.8; margin-bottom: 6px; }
+.corkboard-card__orphan-badge {
+	position: absolute; bottom: 4px; right: 6px;
+	font-size: 10px; color: var(--text-error);
+}
+.corkboard-synopsis {
+	flex: 1;
+	resize: none;
+	border: none;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	padding: 4px 0;
+	outline: none;
+}
+.corkboard-synopsis:focus { background: var(--background-primary); }
+
+.corkboard-color-red    { background: #fde7e7; }
+.corkboard-color-orange { background: #ffeacc; }
+.corkboard-color-yellow { background: #fff7c2; }
+.corkboard-color-green  { background: #d8f1d6; }
+.corkboard-color-blue   { background: #dbeefb; }
+.corkboard-color-purple { background: #ecdcf3; }
+.corkboard-color-pink   { background: #fbdbe7; }
+.corkboard-color-gray   { background: #ececec; }
+
+.corkboard-drop-indicator { display: none; }
+
+.corkboard-error-banner {
+	margin: 16px;
+	padding: 16px;
+	border: 1px solid var(--text-error);
+	border-radius: 6px;
+	background: var(--background-modifier-error-rgb, rgba(255, 0, 0, 0.05));
+}
+.corkboard-error-banner__title { font-weight: 600; color: var(--text-error); margin-bottom: 8px; }
+.corkboard-error-banner__detail { font-family: var(--font-monospace); font-size: 12px; margin-bottom: 12px; opacity: 0.8; }
+.corkboard-error-banner__actions { display: flex; gap: 8px; }
