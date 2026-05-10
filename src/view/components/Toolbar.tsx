@@ -14,13 +14,13 @@ export function Toolbar(p: ToolbarProps) {
       <label>
         Width
         <input type="range" min={MIN_CARD_WIDTH} max={MAX_CARD_WIDTH}
-          value={p.cardWidth} onInput={(e: any) => p.onWidthChange(Number(e.target.value))} />
+          value={p.cardWidth} onInput={(e: Event) => p.onWidthChange(Number((e.currentTarget as HTMLInputElement).value))} />
         <span>{p.cardWidth}px</span>
       </label>
       <label>
         Height
         <input type="range" min={MIN_CARD_HEIGHT} max={MAX_CARD_HEIGHT}
-          value={p.cardHeight} onInput={(e: any) => p.onHeightChange(Number(e.target.value))} />
+          value={p.cardHeight} onInput={(e: Event) => p.onHeightChange(Number((e.currentTarget as HTMLInputElement).value))} />
         <span>{p.cardHeight}px</span>
       </label>
       <span class="corkboard-toolbar__selection">{p.selectedCount > 0 ? `${p.selectedCount} selected` : ""}</span>

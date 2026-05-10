@@ -31,7 +31,7 @@ export function SynopsisEditor(props: SynopsisEditorProps) {
 		<textarea
 			class="corkboard-synopsis"
 			value={text}
-			onInput={(e: any) => setText(e.target.value)}
+			onInput={(e: Event) => setText((e.currentTarget as HTMLTextAreaElement).value)}
 			onBlur={commitIfChanged}
 			onKeyDown={(e: KeyboardEvent) => {
 				if (e.key === "Escape") {

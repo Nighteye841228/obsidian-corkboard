@@ -44,7 +44,7 @@ describe("CorkboardDocument.serialize", () => {
 
 	it("produces stable JSON formatting (2-space indent)", () => {
 		const d = CorkboardDocument.parse(VALID);
-		expect(d.serialize()).toMatch(/\n  /);
+		expect(d.serialize()).toMatch(/\n {2}/);
 	});
 });
 

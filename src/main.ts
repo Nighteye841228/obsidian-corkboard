@@ -1,4 +1,4 @@
-import { Plugin, TFile, TAbstractFile, Notice, WorkspaceLeaf } from "obsidian";
+import { Plugin, TFile, TFolder, TAbstractFile, Notice, WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_CORKBOARD, FILE_EXT_CORKBOARD, CORKBOARD_FILE_NAME } from "./constants";
 import type { CorkboardSettings } from "./types";
 import { mergeSettings } from "./settings/settings";
@@ -49,8 +49,8 @@ export default class CorkboardPlugin extends Plugin {
     }));
 
     this.addCommand({
-      id: "create-corkboard-here",
-      name: "Create corkboard for current folder",
+      id: "create-here",
+      name: "Create for current folder",
       callback: async () => {
         const af = this.app.workspace.getActiveFile();
         const folder = af ? folderOf(af.path) : "";
@@ -79,15 +79,17 @@ export default class CorkboardPlugin extends Plugin {
     return {
       listFolderMd: () => {
         const f = app.vault.getAbstractFileByPath(folderPath);
-        if (!f || !("children" in f)) return [];
-        return ((f as any).children as TAbstractFile[])
-          .filter(c => c instanceof TFile && (c as TFile).extension === "md")
-          .map(c => (c as TFile).path);
+        if (!(f instanceof TFolder)) return [];
+        const paths: string[] = [];
+        for (const c of f.children) {
+          if (c instanceof TFile && c.extension === "md") paths.push(c.path);
+        }
+        return paths;
       },
       create: async (path, content) => { await app.vault.create(path, content); },
       delete: async (path) => {
         const af = app.vault.getAbstractFileByPath(path);
-        if (af) await app.vault.delete(af);
+        if (af) await app.fileManager.trashFile(af);
       },
       getFrontmatterEnd: (path) => {
         const af = app.vault.getAbstractFileByPath(path);

@@ -123,7 +123,7 @@ export class CorkboardView extends TextFileView {
 				dragStore={this.drag}
 				settings={this.deps.getSettings()}
 				pathExists={this.deps.pathExists}
-				openMd={(p) => this.openMd(p)}
+				openMd={(p) => { void this.openMd(p); }}
 				onRebindCard={(i) => this.deps.onRebindCard(this.corkboardPathRegistered!, i)}
 			/>,
 			this.contentEl,
@@ -156,7 +156,7 @@ export class CorkboardView extends TextFileView {
 				<div class="corkboard-error-banner__detail">{this.corruptError}</div>
 				<div class="corkboard-error-banner__actions">
 					<button onClick={showRaw}>Show raw</button>
-					<button onClick={reset}>Reset (overwrite)</button>
+					<button onClick={() => { void reset(); }}>Reset (overwrite)</button>
 				</div>
 			</div>,
 			this.contentEl,

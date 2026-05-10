@@ -17,7 +17,7 @@ export class CorkboardSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Corkboard — Status labels" });
+		new Setting(containerEl).setName("Status labels").setHeading();
 
 		for (const id of STATUS_IDS) {
 			new Setting(containerEl)

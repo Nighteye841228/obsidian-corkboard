@@ -1,6 +1,6 @@
 import { Menu } from "obsidian";
 import type { CorkboardController } from "../../state/controller";
-import type { ColorKey, StatusId, CorkboardSettings } from "../../types";
+import type { CorkboardSettings } from "../../types";
 import { COLOR_PALETTE, STATUS_IDS } from "../../constants";
 
 export function buildCardMenu(opts: {
@@ -23,7 +23,7 @@ export function buildCardMenu(opts: {
 	for (const s of STATUS_IDS) {
 		m.addItem(item =>
 			item.setTitle(`Status: ${settings.statusLabels[s]}`).setIcon("check-square").onClick(() => {
-				for (const i of indices) controller.setStatus(i, s as StatusId);
+				for (const i of indices) controller.setStatus(i, s);
 			})
 		);
 	}
@@ -32,7 +32,7 @@ export function buildCardMenu(opts: {
 	for (const c of COLOR_PALETTE) {
 		m.addItem(item =>
 			item.setTitle(`Colour: ${c}`).setIcon("palette").onClick(() => {
-				for (const i of indices) controller.setColor(i, c as ColorKey);
+				for (const i of indices) controller.setColor(i, c);
 			})
 		);
 	}
