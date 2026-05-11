@@ -81,14 +81,22 @@
 }
 .corkboard-synopsis:focus { background: var(--background-primary); }
 
-.corkboard-color-red    { background: #fde7e7; }
-.corkboard-color-orange { background: #ffeacc; }
-.corkboard-color-yellow { background: #fff7c2; }
-.corkboard-color-green  { background: #d8f1d6; }
-.corkboard-color-blue   { background: #dbeefb; }
-.corkboard-color-purple { background: #ecdcf3; }
-.corkboard-color-pink   { background: #fbdbe7; }
-.corkboard-color-gray   { background: #ececec; }
+/*
+ * Card colours: tint the card's normal secondary background with the theme's
+ * own colour token. Works in both light and dark themes — the same percentage
+ * gives a pastel tone on light and a dim tinted tone on dark, without
+ * hardcoded hex values that fight the theme.
+ *
+ * Fallback hex values are provided for themes that don't ship --color-X.
+ */
+.corkboard-color-red    { background: color-mix(in srgb, var(--color-red,    #e57373) 18%, var(--background-secondary)); }
+.corkboard-color-orange { background: color-mix(in srgb, var(--color-orange, #ffb74d) 18%, var(--background-secondary)); }
+.corkboard-color-yellow { background: color-mix(in srgb, var(--color-yellow, #fff176) 22%, var(--background-secondary)); }
+.corkboard-color-green  { background: color-mix(in srgb, var(--color-green,  #81c784) 18%, var(--background-secondary)); }
+.corkboard-color-blue   { background: color-mix(in srgb, var(--color-blue,   #64b5f6) 18%, var(--background-secondary)); }
+.corkboard-color-purple { background: color-mix(in srgb, var(--color-purple, #ba68c8) 18%, var(--background-secondary)); }
+.corkboard-color-pink   { background: color-mix(in srgb, var(--color-pink,   #f48fb1) 18%, var(--background-secondary)); }
+.corkboard-color-gray   { background: color-mix(in srgb, var(--text-muted,   #bdbdbd) 18%, var(--background-secondary)); }
 
 .corkboard-drop-indicator { display: none; }
 

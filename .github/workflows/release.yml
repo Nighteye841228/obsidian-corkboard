@@ -1,0 +1,60 @@
+name: Release Obsidian plugin
+
+# Trigger: pushing a SemVer-shaped tag (e.g. `0.1.0`, `1.2.3`).
+# Important: the tag MUST exactly match the `version` field in manifest.json
+# and must NOT carry a leading `v` — that's the Obsidian community plugin
+# convention. See https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin
+on:
+    push:
+        tags:
+            - "[0-9]+.[0-9]+.[0-9]+"
+            - "[0-9]+.[0-9]+.[0-9]+-*"
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Verify tag matches manifest.json version
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  manifest_version=$(node -p "require('./manifest.json').version")
+                  if [ "$tag" != "$manifest_version" ]; then
+                      echo "::error::Tag '$tag' does not match manifest.json version '$manifest_version'"
+                      exit 1
+                  fi
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build plugin
+              run: npm run build
+
+            - name: Confirm release artifacts exist
+              run: |
+                  test -f main.js
+                  test -f manifest.json
+                  test -f styles.css
+
+            - name: Create draft release with artifacts
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  gh release create "$tag" \
+                      --title="$tag" \
+                      --draft \
+                      --notes "Release $tag. Edit these notes before publishing." \
+                      main.js manifest.json styles.css
