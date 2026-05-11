@@ -19,7 +19,7 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/preact": "^3.2.4",
 		"@types/node": "^20.19.40",
-		"esbuild": "0.25.5",
+		"esbuild": "^0.28.0",
 		"eslint-plugin-obsidianmd": "0.1.9",
 		"globals": "14.0.0",
 		"jiti": "2.6.1",
