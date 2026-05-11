@@ -13,6 +13,13 @@ on:
 permissions:
     contents: write
 
+# Opt the JavaScript actions (checkout, setup-node) into the Node.js 24
+# runtime. GitHub is removing Node.js 20 from runners in Sep 2026; this
+# silences the deprecation warning until upstream actions publish a major
+# version built for Node 24.
+env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
     release:
         runs-on: ubuntu-latest
@@ -24,7 +31,7 @@ jobs:
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "20"
+                  node-version: "22"
                   cache: "npm"
 
             - name: Verify tag matches manifest.json version
