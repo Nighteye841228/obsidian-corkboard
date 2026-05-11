@@ -1,4 +1,4 @@
-import { TextFileView, WorkspaceLeaf, TFile } from "obsidian";
+import { TextFileView, WorkspaceLeaf, TFile, normalizePath } from "obsidian";
 import { render } from "preact";
 import { CorkboardDocument } from "../data/corkboardDocument";
 import { CorkboardController, VaultGateway } from "../state/controller";
@@ -74,7 +74,7 @@ export class CorkboardView extends TextFileView {
 				// Force immediate save instead of relying on the 2 s requestSave debounce.
 				// Critical when the user switches tabs / closes the leaf right after a mutation.
 				if (!this.corruptError) {
-					void this.save().catch((e: unknown) => console.error("[corkboard] save failed", e));
+					void this.save().catch((e: unknown) => console.error("Corkboard save failed", e));
 				}
 				this.renderApp();
 			},
@@ -139,7 +139,8 @@ export class CorkboardView extends TextFileView {
 			// Bypass our suppression — the user explicitly chose to overwrite.
 			this.corruptError = null;
 			this.originalRaw = fresh;
-			if (this.file) await this.app.vault.modify(this.file, fresh);
+			// vault.process is atomic; safer than vault.modify against concurrent writes.
+			if (this.file) await this.app.vault.process(this.file, () => fresh);
 			this.setViewData(fresh, true);
 		};
 		const showRaw = () => {
@@ -180,7 +181,9 @@ export class CorkboardView extends TextFileView {
 		const folder = folderOf(oldPath);
 		const safe = newName.replace(/[\\/:*?"<>|]/g, "").trim();
 		if (safe === "") return;
-		const target = (folder === "" ? safe : `${folder}/${safe}`) + ".md";
+		const target = normalizePath(
+			(folder === "" ? safe : `${folder}/${safe}`) + ".md",
+		);
 		if (target === oldPath) return;
 		await this.app.fileManager.renameFile(af, target);
 	}

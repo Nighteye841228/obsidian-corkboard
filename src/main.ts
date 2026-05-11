@@ -1,4 +1,4 @@
-import { Plugin, TFile, TFolder, TAbstractFile, Menu, Notice, WorkspaceLeaf } from "obsidian";
+import { Plugin, TFile, TFolder, TAbstractFile, Menu, Notice, WorkspaceLeaf, normalizePath } from "obsidian";
 import { VIEW_TYPE_CORKBOARD, FILE_EXT_CORKBOARD, CORKBOARD_FILE_NAME } from "./constants";
 import type { CorkboardSettings } from "./types";
 import { mergeSettings } from "./settings/settings";
@@ -24,7 +24,9 @@ export default class CorkboardPlugin extends Plugin {
       },
       writeCorkboardJson: async (path, json) => {
         const af = this.app.vault.getAbstractFileByPath(path);
-        if (af instanceof TFile) await this.app.vault.modify(af, json);
+        // Use vault.process for atomic background writes (avoids races with
+        // other plugins modifying the same file).
+        if (af instanceof TFile) await this.app.vault.process(af, () => json);
       },
       hasCorkboard: (path) => this.app.vault.getAbstractFileByPath(path) instanceof TFile,
     });
@@ -63,7 +65,9 @@ export default class CorkboardPlugin extends Plugin {
     // Add "Create corkboard" entry to a folder's right-click menu.
     this.registerEvent(this.app.workspace.on("file-menu", (menu: Menu, file: TAbstractFile) => {
       if (!(file instanceof TFolder)) return;
-      const corkboardPath = file.path === "" ? CORKBOARD_FILE_NAME : `${file.path}/${CORKBOARD_FILE_NAME}`;
+      const corkboardPath = normalizePath(
+        file.path === "" ? CORKBOARD_FILE_NAME : `${file.path}/${CORKBOARD_FILE_NAME}`,
+      );
       const exists = this.app.vault.getAbstractFileByPath(corkboardPath) instanceof TFile;
       menu.addItem(item => {
         item.setTitle("Create corkboard").setIcon("layout-grid");
@@ -91,7 +95,9 @@ export default class CorkboardPlugin extends Plugin {
    * already has a corkboard.
    */
   private async createCorkboardForFolder(folderPath: string): Promise<void> {
-    const path = folderPath === "" ? CORKBOARD_FILE_NAME : `${folderPath}/${CORKBOARD_FILE_NAME}`;
+    const path = normalizePath(
+      folderPath === "" ? CORKBOARD_FILE_NAME : `${folderPath}/${CORKBOARD_FILE_NAME}`,
+    );
     if (this.app.vault.getAbstractFileByPath(path)) {
       new Notice("This folder already has a corkboard.");
       return;
@@ -113,27 +119,26 @@ export default class CorkboardPlugin extends Plugin {
   }
 
   private buildGateway(folderPath: string): VaultGateway {
-    const app = this.app;
     return {
       listFolderMd: () => this.listFolderMd(folderPath),
-      create: async (path, content) => { await app.vault.create(path, content); },
+      create: async (path, content) => { await this.app.vault.create(path, content); },
       delete: async (path) => {
-        const af = app.vault.getAbstractFileByPath(path);
-        if (af) await app.fileManager.trashFile(af);
+        const af = this.app.vault.getAbstractFileByPath(path);
+        if (af) await this.app.fileManager.trashFile(af);
       },
       getFrontmatterEnd: (path) => {
-        const af = app.vault.getAbstractFileByPath(path);
+        const af = this.app.vault.getAbstractFileByPath(path);
         if (!(af instanceof TFile)) return null;
-        const cache = app.metadataCache.getFileCache(af);
+        const cache = this.app.metadataCache.getFileCache(af);
         const fm = cache?.frontmatterPosition;
         return fm ? fm.end.offset : null;
       },
       process: async (path, fn) => {
-        const af = app.vault.getAbstractFileByPath(path);
+        const af = this.app.vault.getAbstractFileByPath(path);
         if (!(af instanceof TFile)) return "";
-        return await app.vault.process(af, fn);
+        return await this.app.vault.process(af, fn);
       },
-      exists: (path) => app.vault.getAbstractFileByPath(path) instanceof TFile,
+      exists: (path) => this.app.vault.getAbstractFileByPath(path) instanceof TFile,
     };
   }
 }

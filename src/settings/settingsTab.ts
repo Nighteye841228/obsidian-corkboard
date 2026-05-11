@@ -17,8 +17,8 @@ export class CorkboardSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		new Setting(containerEl).setName("Status labels").setHeading();
 
+		// Only one section — no top-level heading per Obsidian plugin guidelines.
 		for (const id of STATUS_IDS) {
 			new Setting(containerEl)
 				.setName(id)
