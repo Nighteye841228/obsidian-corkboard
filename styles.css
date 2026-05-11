@@ -27,6 +27,10 @@
 	flex: 1;
 	min-height: 0;
 }
+.corkboard-grid.is-dragging,
+.corkboard-grid.is-dragging * {
+	cursor: grabbing !important;
+}
 
 .corkboard-card {
 	background: var(--background-secondary);
@@ -39,12 +43,24 @@
 	user-select: none;
 	position: relative;
 	overflow: hidden;
+	transition: opacity 80ms ease, box-shadow 80ms ease, transform 80ms ease;
 }
 .corkboard-card.is-selected { outline: 2px solid var(--interactive-accent); }
 .corkboard-card.is-orphan {
 	opacity: 0.55;
 	filter: grayscale(0.6);
 	border-color: var(--text-error);
+}
+.corkboard-card.is-dragging {
+	opacity: 0.4;
+	cursor: grabbing;
+	transform: scale(0.97);
+}
+.corkboard-card.is-drop-before {
+	box-shadow: inset 4px 0 0 0 var(--interactive-accent);
+}
+.corkboard-card.is-drop-after {
+	box-shadow: inset -4px 0 0 0 var(--interactive-accent);
 }
 .corkboard-card__title { font-weight: 600; margin-bottom: 4px; }
 .corkboard-card__status { font-size: 11px; opacity: 0.8; margin-bottom: 6px; }

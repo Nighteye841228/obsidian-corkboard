@@ -7,6 +7,8 @@ export interface CardProps {
 	card: CorkboardCard;
 	selected: boolean;
 	orphan: boolean;
+	dragging: boolean;
+	dropEdge: "before" | "after" | null;
 	width: number;
 	height: number;
 	statusLabel: string;
@@ -95,6 +97,9 @@ export function Card(props: CardProps) {
 		"corkboard-card",
 		props.selected ? "is-selected" : "",
 		props.orphan ? "is-orphan" : "",
+		props.dragging ? "is-dragging" : "",
+		props.dropEdge === "before" ? "is-drop-before" : "",
+		props.dropEdge === "after" ? "is-drop-after" : "",
 		props.card.color ? `corkboard-color-${props.card.color}` : "",
 	].filter(Boolean).join(" ");
 

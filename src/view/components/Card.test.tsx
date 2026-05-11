@@ -9,7 +9,7 @@ const baseCard = { path: "novel/a.md", synopsis: "hello", status: "todo" as cons
 describe("<Card>", () => {
 	it("shows the basename of the path as the title", () => {
 		const { getByText } = render(
-			<Card index={0} card={baseCard} selected={false} orphan={false} width={280} height={180} statusLabel="Todo"
+			<Card index={0} card={baseCard} selected={false} orphan={false} dragging={false} dropEdge={null} width={280} height={180} statusLabel="Todo"
 				onClick={() => {}} onDoubleClick={() => {}} onContextMenu={() => {}} onSynopsisCommit={() => {}} />
 		);
 		expect(getByText("a")).toBeInTheDocument();
@@ -18,7 +18,7 @@ describe("<Card>", () => {
 	it("calls onClick with modifiers", () => {
 		const onClick = vi.fn();
 		const { container } = render(
-			<Card index={2} card={baseCard} selected={false} orphan={false} width={280} height={180} statusLabel="Todo"
+			<Card index={2} card={baseCard} selected={false} orphan={false} dragging={false} dropEdge={null} width={280} height={180} statusLabel="Todo"
 				onClick={onClick} onDoubleClick={() => {}} onContextMenu={() => {}} onSynopsisCommit={() => {}} />
 		);
 		fireEvent.click(container.querySelector(".corkboard-card")!, { metaKey: true });
@@ -28,7 +28,7 @@ describe("<Card>", () => {
 	it("calls onDoubleClick with index", () => {
 		const onDouble = vi.fn();
 		const { container } = render(
-			<Card index={1} card={baseCard} selected={false} orphan={false} width={280} height={180} statusLabel="Todo"
+			<Card index={1} card={baseCard} selected={false} orphan={false} dragging={false} dropEdge={null} width={280} height={180} statusLabel="Todo"
 				onClick={() => {}} onDoubleClick={onDouble} onContextMenu={() => {}} onSynopsisCommit={() => {}} />
 		);
 		fireEvent.dblClick(container.querySelector(".corkboard-card")!);
@@ -37,7 +37,7 @@ describe("<Card>", () => {
 
 	it("renders selected state", () => {
 		const { container } = render(
-			<Card index={0} card={baseCard} selected={true} orphan={false} width={280} height={180} statusLabel="Todo"
+			<Card index={0} card={baseCard} selected={true} orphan={false} dragging={false} dropEdge={null} width={280} height={180} statusLabel="Todo"
 				onClick={() => {}} onDoubleClick={() => {}} onContextMenu={() => {}} onSynopsisCommit={() => {}} />
 		);
 		expect(container.querySelector(".corkboard-card.is-selected")).toBeTruthy();
@@ -45,7 +45,7 @@ describe("<Card>", () => {
 
 	it("renders orphan badge when orphan=true", () => {
 		const { container } = render(
-			<Card index={0} card={baseCard} selected={false} orphan={true} width={280} height={180} statusLabel="Todo"
+			<Card index={0} card={baseCard} selected={false} orphan={true} dragging={false} dropEdge={null} width={280} height={180} statusLabel="Todo"
 				onClick={() => {}} onDoubleClick={() => {}} onContextMenu={() => {}} onSynopsisCommit={() => {}} />
 		);
 		expect(container.querySelector(".corkboard-card.is-orphan")).toBeTruthy();
