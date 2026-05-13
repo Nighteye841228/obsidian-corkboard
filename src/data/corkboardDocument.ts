@@ -50,12 +50,11 @@ export class CorkboardDocument {
 	}
 
 	reorder(from: number, to: number): void {
-		if (from === to) return;
-		if (from < 0 || from >= this.data.cards.length) return;
-		if (to < 0 || to >= this.data.cards.length) return;
-		const item = this.data.cards.splice(from, 1)[0];
-		if (!item) return;
-		this.data.cards.splice(to, 0, item);
+		// Old splice-style `to` is the post-removal index. reorderMany takes a
+		// pre-removal index. When from < to, the post-removal slot maps to the
+		// pre-removal index (to + 1); otherwise it's the same.
+		const preTo = from < to ? to + 1 : to;
+		this.reorderMany([from], preTo);
 	}
 
 	reorderMany(fromIndices: number[], to: number): void {
