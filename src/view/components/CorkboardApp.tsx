@@ -6,7 +6,7 @@ import type { DragStore } from "../../state/dragStore";
 import type { CorkboardSettings, CorkboardCard } from "../../types";
 import { Toolbar } from "./Toolbar";
 import { CardGrid } from "./CardGrid";
-import { DragGhost } from "./DragGhost";
+import { createDragGhost } from "./DragGhost";
 import { buildCardMenu, buildEmptyAreaMenu } from "./contextMenus";
 import { resolveDragSet, remapSelectionByPath } from "../../state/dragHelpers";
 
@@ -80,6 +80,10 @@ export function CorkboardApp(p: CorkboardAppProps) {
 	const teardown = () => {
 		uninstallListeners();
 		pendingRef.current = null;
+		if (ghostElRef.current) {
+			ghostElRef.current.remove();
+			ghostElRef.current = null;
+		}
 	};
 
 	const cancelDrag = () => {
@@ -120,8 +124,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 				if (set.replaceSelection) {
 					p.selectionStore.click(pending.primary, { meta: false, shift: false });
 				}
-				// Re-anchor press point to the current cursor so the ghost mounts
-				// with its top-left under the pointer.
 				pendingRef.current = {
 					...pending,
 					pressX: evt.clientX,
@@ -129,6 +131,23 @@ export function CorkboardApp(p: CorkboardAppProps) {
 					indices: set.indices,
 				};
 				p.dragStore.start(pending.primary, set.indices);
+				// Build the ghost as a detached DOM element and append it to
+				// document.body. Anchoring to body sidesteps `position: fixed`
+				// being trapped inside a transformed Obsidian ancestor (which
+				// would offset the ghost by the leaf's own left/top).
+				const primaryCard = p.controller.doc.data.cards[pending.primary];
+				if (primaryCard) {
+					const g = createDragGhost({
+						card: primaryCard,
+						extraCount: set.indices.length - 1,
+						width: p.controller.doc.data.cardWidth,
+						height: p.controller.doc.data.cardHeight,
+						statusLabel: p.settings.statusLabels[primaryCard.status],
+					});
+					document.body.appendChild(g);
+					g.style.transform = `translate(${evt.clientX}px, ${evt.clientY}px)`;
+					ghostElRef.current = g;
+				}
 			}
 			return;
 		}
@@ -220,9 +239,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 
 	useEffect(() => () => teardown(), []);
 
-	const ghostPrimary = dragState.active && dragState.primary !== null ? cards[dragState.primary] : null;
-	const pending = pendingRef.current;
-
 	return (
 		<div class="corkboard-app">
 			<Toolbar
@@ -281,18 +297,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 				onGridPointerMove={() => {}}
 				onGridPointerUp={() => {}}
 			/>
-			{dragState.active && ghostPrimary && pending && (
-				<DragGhost
-					card={ghostPrimary}
-					extraCount={dragState.fromIndices.length - 1}
-					width={p.controller.doc.data.cardWidth}
-					height={p.controller.doc.data.cardHeight}
-					statusLabel={p.settings.statusLabels[ghostPrimary.status]}
-					initialX={pending.pressX}
-					initialY={pending.pressY}
-					ghostRef={(el) => { ghostElRef.current = el; }}
-				/>
-			)}
 		</div>
 	);
 }

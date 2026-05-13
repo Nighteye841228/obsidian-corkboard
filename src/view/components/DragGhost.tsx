@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "preact/hooks";
 import type { CorkboardCard } from "../../types";
 
 export interface DragGhostProps {
@@ -7,9 +6,6 @@ export interface DragGhostProps {
   width: number;
   height: number;
   statusLabel: string;
-  initialX: number;
-  initialY: number;
-  ghostRef: (el: HTMLDivElement | null) => void;
 }
 
 function basename(path: string): string {
@@ -17,28 +13,43 @@ function basename(path: string): string {
   return tail.replace(/\.md$/i, "");
 }
 
-export function DragGhost(p: DragGhostProps) {
-  const localRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    p.ghostRef(localRef.current);
-    return () => p.ghostRef(null);
-  }, []);
-
+// Imperative DOM ghost. Rendered outside the preact tree, appended directly
+// to document.body so its `position: fixed` is anchored to the viewport
+// (Obsidian workspace containers apply `transform`, which would otherwise
+// trap a fixed-positioned descendant inside the leaf and offset it by the
+// leaf's own left/top).
+export function createDragGhost(p: DragGhostProps): HTMLDivElement {
+  const root = document.createElement("div");
   const hasStack = p.extraCount > 0;
-  const cls = "corkboard-drag-ghost" + (hasStack ? " has-stack" : "");
-  return (
-    <div
-      ref={localRef}
-      class={cls}
-      style={{ width: `${p.width}px`, height: `${p.height}px`, transform: `translate(${p.initialX}px, ${p.initialY}px)` }}
-    >
-      <div class="corkboard-card__title">{basename(p.card.path)}</div>
-      <div class="corkboard-card__status">{p.statusLabel}</div>
-      <div class="corkboard-synopsis" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {p.card.synopsis}
-      </div>
-      {hasStack && <div class="corkboard-drag-ghost__badge">+{p.extraCount}</div>}
-    </div>
-  );
+  root.className = "corkboard-drag-ghost" + (hasStack ? " has-stack" : "");
+  root.style.width = `${p.width}px`;
+  root.style.height = `${p.height}px`;
+  root.style.transform = "translate(-9999px, -9999px)";
+
+  const title = document.createElement("div");
+  title.className = "corkboard-card__title";
+  title.textContent = basename(p.card.path);
+  root.appendChild(title);
+
+  const status = document.createElement("div");
+  status.className = "corkboard-card__status";
+  status.textContent = p.statusLabel;
+  root.appendChild(status);
+
+  const synopsis = document.createElement("div");
+  synopsis.className = "corkboard-synopsis";
+  synopsis.style.whiteSpace = "nowrap";
+  synopsis.style.overflow = "hidden";
+  synopsis.style.textOverflow = "ellipsis";
+  synopsis.textContent = p.card.synopsis;
+  root.appendChild(synopsis);
+
+  if (hasStack) {
+    const badge = document.createElement("div");
+    badge.className = "corkboard-drag-ghost__badge";
+    badge.textContent = `+${p.extraCount}`;
+    root.appendChild(badge);
+  }
+
+  return root;
 }
