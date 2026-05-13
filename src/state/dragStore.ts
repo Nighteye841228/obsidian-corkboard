@@ -1,12 +1,13 @@
 export interface DragState {
   active: boolean;
-  fromIndex: number | null;
+  fromIndices: number[];   // every card being dragged (includes primary)
+  primary: number | null;  // the card the pointer pressed down on
   dropTarget: number | null;
 }
 
 export interface DragStore {
   get(): DragState;
-  start(fromIndex: number): void;
+  start(primary: number, indices: number[]): void;
   setDropTarget(idx: number | null): void;
   end(): void;
   runOrQueue(fn: () => void): void;
@@ -14,15 +15,15 @@ export interface DragStore {
 }
 
 export function createDragStore(): DragStore {
-  let state: DragState = { active: false, fromIndex: null, dropTarget: null };
+  let state: DragState = { active: false, fromIndices: [], primary: null, dropTarget: null };
   const queue: Array<() => void> = [];
   const subs = new Set<() => void>();
   const notify = () => { for (const fn of subs) fn(); };
 
   return {
     get: () => state,
-    start(fromIndex) {
-      state = { active: true, fromIndex, dropTarget: null };
+    start(primary, indices) {
+      state = { active: true, primary, fromIndices: indices.slice(), dropTarget: null };
       notify();
     },
     setDropTarget(idx) {
@@ -30,7 +31,7 @@ export function createDragStore(): DragStore {
       notify();
     },
     end() {
-      state = { active: false, fromIndex: null, dropTarget: null };
+      state = { active: false, primary: null, fromIndices: [], dropTarget: null };
       notify();
       while (queue.length) {
         const fn = queue.shift()!;
