@@ -98,8 +98,6 @@
 .corkboard-color-pink   { background: color-mix(in srgb, var(--color-pink,   #f48fb1) 18%, var(--background-secondary)); }
 .corkboard-color-gray   { background: color-mix(in srgb, var(--text-muted,   #bdbdbd) 18%, var(--background-secondary)); }
 
-.corkboard-drop-indicator { display: none; }
-
 /* Drag ghost — follows cursor while dragging. */
 .corkboard-drag-ghost {
 	position: fixed;
