@@ -109,7 +109,9 @@ export default class CorkboardPlugin extends Plugin {
   }
 
   private listFolderMd(folderPath: string): string[] {
-    const f = this.app.vault.getAbstractFileByPath(folderPath);
+    const f = folderPath === ""
+      ? this.app.vault.getRoot()
+      : this.app.vault.getAbstractFileByPath(folderPath);
     if (!(f instanceof TFolder)) return [];
     const paths: string[] = [];
     for (const c of f.children) {
