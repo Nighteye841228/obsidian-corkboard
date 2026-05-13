@@ -47,4 +47,26 @@ describe("selectionStore", () => {
     expect(count).toBe(2);
     unsub();
   });
+
+  it("setAll replaces the selection with the given indices", () => {
+    const s = createSelectionStore();
+    s.click(0, { meta: false, shift: false });
+    s.setAll([3, 5, 7]);
+    expect(Array.from(s.get()).sort((a,b)=>a-b)).toEqual([3, 5, 7]);
+  });
+
+  it("setAll([]) clears the selection", () => {
+    const s = createSelectionStore();
+    s.click(1, { meta: false, shift: false });
+    s.setAll([]);
+    expect(Array.from(s.get())).toEqual([]);
+  });
+
+  it("setAll notifies subscribers once", () => {
+    const s = createSelectionStore();
+    let count = 0;
+    s.subscribe(() => { count++; });
+    s.setAll([1, 2, 3]);
+    expect(count).toBe(1);
+  });
 });

@@ -4,6 +4,7 @@ export interface SelectionStore {
   get(): ReadonlySet<number>;
   click(index: number, mods: ClickModifiers): void;
   clear(): void;
+  setAll(indices: Iterable<number>): void;
   subscribe(fn: () => void): () => void;
 }
 
@@ -34,6 +35,11 @@ export function createSelectionStore(): SelectionStore {
     },
     clear() {
       selected = new Set();
+      anchor = null;
+      notify();
+    },
+    setAll(indices) {
+      selected = new Set(indices);
       anchor = null;
       notify();
     },
