@@ -70,6 +70,11 @@ export class CorkboardController {
 		this.onChange();
 	}
 
+	reorderMany(fromIndices: number[], to: number): void {
+		this.doc.reorderMany(fromIndices, to);
+		this.onChange();
+	}
+
 	updateSynopsis(index: number, text: string): void {
 		this.doc.update(index, { synopsis: text });
 		this.onChange();

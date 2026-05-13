@@ -60,6 +60,18 @@ describe("CorkboardController", () => {
     expect(onChange).toHaveBeenCalled();
   });
 
+  it("reorderMany delegates to doc.reorderMany and notifies", () => {
+    const doc = CorkboardDocument.parse("");
+    doc.addCard({ path: "1", synopsis: "", status: "todo", color: null });
+    doc.addCard({ path: "2", synopsis: "", status: "todo", color: null });
+    doc.addCard({ path: "3", synopsis: "", status: "todo", color: null });
+    const onChange = vi.fn();
+    const c = new CorkboardController({ doc, folderPath: "", gateway: makeGateway(), onChange });
+    c.reorderMany([0, 1], 3);
+    expect(doc.data.cards.map(x => x.path)).toEqual(["3", "1", "2"]);
+    expect(onChange).toHaveBeenCalled();
+  });
+
   it("updateSynopsis updates the right card", () => {
     const doc = CorkboardDocument.parse(`{"version":1,"cardWidth":280,"cardHeight":180,"cards":[{"path":"a.md","synopsis":"old","status":"todo","color":null}]}`);
     const c = new CorkboardController({ doc, folderPath: "", gateway: makeGateway(), onChange: () => {} });
