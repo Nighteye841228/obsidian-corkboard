@@ -58,6 +58,23 @@ export class CorkboardDocument {
 		this.data.cards.splice(to, 0, item);
 	}
 
+	reorderMany(fromIndices: number[], to: number): void {
+		const n = this.data.cards.length;
+		const sorted = Array.from(new Set(fromIndices))
+			.filter(i => Number.isInteger(i) && i >= 0 && i < n)
+			.sort((a, b) => a - b);
+		if (sorted.length === 0) return;
+		if (to < 0 || to > n) return;
+		if (sorted.includes(to)) return;
+		const items = sorted.map(i => this.data.cards[i]!);
+		for (let k = sorted.length - 1; k >= 0; k--) {
+			this.data.cards.splice(sorted[k]!, 1);
+		}
+		const shift = sorted.filter(i => i < to).length;
+		const insertAt = to - shift;
+		this.data.cards.splice(insertAt, 0, ...items);
+	}
+
 	update(index: number, patch: Partial<CorkboardCard>): void {
 		const card = this.data.cards[index];
 		if (!card) return;

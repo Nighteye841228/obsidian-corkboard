@@ -90,4 +90,58 @@ describe("CorkboardDocument mutations", () => {
 		expect(d.data.cardWidth).toBe(320);
 		expect(d.data.cardHeight).toBe(200);
 	});
+
+	function makeDocWithPaths(paths: string[]): CorkboardDocument {
+		const d = CorkboardDocument.parse("");
+		for (const p of paths) d.addCard({ path: p, synopsis: "", status: "todo", color: null });
+		return d;
+	}
+
+	it("reorderMany moves a contiguous slice forward", () => {
+		const d = makeDocWithPaths(["a", "b", "c", "d", "e"]);
+		d.reorderMany([0, 1], 4);
+		expect(d.data.cards.map(c => c.path)).toEqual(["c", "d", "a", "b", "e"]);
+	});
+
+	it("reorderMany moves non-contiguous indices preserving relative order", () => {
+		const d = makeDocWithPaths(["a", "b", "c", "d", "e"]);
+		d.reorderMany([0, 2], 4);
+		expect(d.data.cards.map(c => c.path)).toEqual(["b", "d", "a", "c", "e"]);
+	});
+
+	it("reorderMany moves a slice backward (to before original position)", () => {
+		const d = makeDocWithPaths(["a", "b", "c", "d", "e"]);
+		d.reorderMany([3, 4], 1);
+		expect(d.data.cards.map(c => c.path)).toEqual(["a", "d", "e", "b", "c"]);
+	});
+
+	it("reorderMany no-ops when to is within fromIndices", () => {
+		const d = makeDocWithPaths(["a", "b", "c", "d"]);
+		d.reorderMany([1, 2], 1);
+		expect(d.data.cards.map(c => c.path)).toEqual(["a", "b", "c", "d"]);
+	});
+
+	it("reorderMany handles drop at index 0", () => {
+		const d = makeDocWithPaths(["a", "b", "c", "d"]);
+		d.reorderMany([2, 3], 0);
+		expect(d.data.cards.map(c => c.path)).toEqual(["c", "d", "a", "b"]);
+	});
+
+	it("reorderMany handles drop at cards.length (drop-at-end)", () => {
+		const d = makeDocWithPaths(["a", "b", "c", "d"]);
+		d.reorderMany([0, 1], 4);
+		expect(d.data.cards.map(c => c.path)).toEqual(["c", "d", "a", "b"]);
+	});
+
+	it("reorderMany ignores out-of-range indices in fromIndices", () => {
+		const d = makeDocWithPaths(["a", "b", "c"]);
+		d.reorderMany([0, 99, -1, 2], 3);
+		expect(d.data.cards.map(c => c.path)).toEqual(["b", "a", "c"]);
+	});
+
+	it("reorderMany ignores empty fromIndices", () => {
+		const d = makeDocWithPaths(["a", "b"]);
+		d.reorderMany([], 1);
+		expect(d.data.cards.map(c => c.path)).toEqual(["a", "b"]);
+	});
 });
