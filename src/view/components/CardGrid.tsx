@@ -1,6 +1,5 @@
 import type { CorkboardCard, StatusId } from "../../types";
 import { Card } from "./Card";
-import { DragLayer } from "./DragLayer";
 
 export interface CardGridProps {
 	cards: CorkboardCard[];
@@ -9,7 +8,7 @@ export interface CardGridProps {
 	cardWidth: number;
 	cardHeight: number;
 	statusLabels: Record<StatusId, string>;
-	drag: { active: boolean; fromIndex: number | null; dropTarget: number | null };
+	drag: { active: boolean; fromIndices: number[]; primary: number | null; dropTarget: number | null };
 	onCardClick: (index: number, mods: { meta: boolean; shift: boolean }) => void;
 	onCardDoubleClick: (index: number) => void;
 	onCardContextMenu: (index: number, evt: MouseEvent) => void;
@@ -40,15 +39,16 @@ export function CardGrid(p: CardGridProps) {
 			onPointerUp={p.onGridPointerUp}
 		>
 			{p.cards.map((card, i) => {
-				const dragging = p.drag.active && p.drag.fromIndex === i;
+				const draggedSet = p.drag.fromIndices;
+				const dragging = p.drag.active && draggedSet.includes(i);
 				let dropEdge: "before" | "after" | null = null;
 				if (
 					p.drag.active &&
 					p.drag.dropTarget === i &&
-					p.drag.fromIndex !== null &&
-					p.drag.fromIndex !== p.drag.dropTarget
+					p.drag.primary !== null &&
+					!draggedSet.includes(p.drag.dropTarget)
 				) {
-					dropEdge = p.drag.fromIndex < p.drag.dropTarget ? "after" : "before";
+					dropEdge = p.drag.primary < p.drag.dropTarget ? "after" : "before";
 				}
 				return (
 					<Card
@@ -71,7 +71,6 @@ export function CardGrid(p: CardGridProps) {
 					/>
 				);
 			})}
-			<DragLayer drag={p.drag} cardCount={p.cards.length} />
 		</div>
 	);
 }
