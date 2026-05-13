@@ -26,11 +26,11 @@ export interface CorkboardAppProps {
 }
 
 interface PendingDrag {
-	pressX: number;
-	pressY: number;
+	pressX: number;        // updated to current pointer at threshold-crossing
+	pressY: number;        // (so the ghost mounts under the cursor, not the original click)
 	primary: number;
-	indices: number[];
-	offsetX: number;
+	indices: number[];     // resolved at threshold-crossing, empty until then
+	offsetX: number;       // pointer offset inside the primary card at original pointerdown
 	offsetY: number;
 	cardsSnapshot: CorkboardCard[];
 }
@@ -111,8 +111,23 @@ export function CorkboardApp(p: CorkboardAppProps) {
 			const dx = evt.clientX - pending.pressX;
 			const dy = evt.clientY - pending.pressY;
 			if (Math.hypot(dx, dy) >= DRAG_THRESHOLD_PX) {
+				// Resolve the drag set NOW against current selection. If we did
+				// this on pointerdown, we would race the click event's modifier
+				// handling and stomp Cmd/Shift-click selection.
+				const set = resolveDragSet(pending.primary, p.selectionStore.get());
+				if (set.replaceSelection) {
+					p.selectionStore.click(pending.primary, { meta: false, shift: false });
+				}
+				// Re-anchor press point to the current cursor so the ghost mounts
+				// under the pointer rather than at the original click position.
+				pendingRef.current = {
+					...pending,
+					pressX: evt.clientX,
+					pressY: evt.clientY,
+					indices: set.indices,
+				};
 				ghostOffsetRef.current = { ox: pending.offsetX, oy: pending.offsetY };
-				p.dragStore.start(pending.primary, pending.indices);
+				p.dragStore.start(pending.primary, set.indices);
 			}
 			return;
 		}
@@ -132,7 +147,8 @@ export function CorkboardApp(p: CorkboardAppProps) {
 	const onDocPointerUp = () => {
 		const state = p.dragStore.get();
 		const pending = pendingRef.current;
-		if (state.active && pending) {
+		const dragWasActive = state.active;
+		if (dragWasActive && pending) {
 			const dropTarget = state.dropTarget;
 			const to = dropTarget == null ? p.controller.doc.data.cards.length : dropTarget;
 			const fromIndices = state.fromIndices;
@@ -144,6 +160,22 @@ export function CorkboardApp(p: CorkboardAppProps) {
 			p.selectionStore.setAll(newSelected);
 		}
 		cancelDrag();
+		if (dragWasActive) {
+			// Suppress the synthetic click that fires when pointerdown and
+			// pointerup were close enough to be considered a click (e.g., the
+			// user shook the card a bit and released on the same target). The
+			// drag already committed selection via setAll; the click would
+			// stomp it.
+			const suppress = (e: MouseEvent) => {
+				e.stopPropagation();
+				e.preventDefault();
+				document.removeEventListener("click", suppress, true);
+			};
+			document.addEventListener("click", suppress, true);
+			// Safety: if no click fires (release outside any element), remove
+			// the listener after a frame.
+			setTimeout(() => document.removeEventListener("click", suppress, true), 0);
+		}
 	};
 
 	const onDocKeyDown = (evt: KeyboardEvent) => {
@@ -159,16 +191,15 @@ export function CorkboardApp(p: CorkboardAppProps) {
 		const offsetX = rect ? evt.clientX - rect.left : 0;
 		const offsetY = rect ? evt.clientY - rect.top : 0;
 
-		const set = resolveDragSet(i, p.selectionStore.get());
-		if (set.replaceSelection) {
-			p.selectionStore.click(i, { meta: false, shift: false });
-		}
-
+		// Do NOT mutate selection here. The click event (if no drag occurs)
+		// will handle selection through Card's onClick with proper modifier
+		// keys. If a drag occurs, onDocPointerMove resolves the drag set at
+		// threshold crossing.
 		pendingRef.current = {
 			pressX: evt.clientX,
 			pressY: evt.clientY,
 			primary: i,
-			indices: set.indices,
+			indices: [],
 			offsetX,
 			offsetY,
 			cardsSnapshot: p.controller.doc.data.cards.slice(),
