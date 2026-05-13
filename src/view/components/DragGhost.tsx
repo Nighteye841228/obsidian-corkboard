@@ -9,8 +9,6 @@ export interface DragGhostProps {
   statusLabel: string;
   initialX: number;
   initialY: number;
-  offsetX: number;
-  offsetY: number;
   ghostRef: (el: HTMLDivElement | null) => void;
 }
 
@@ -29,13 +27,11 @@ export function DragGhost(p: DragGhostProps) {
 
   const hasStack = p.extraCount > 0;
   const cls = "corkboard-drag-ghost" + (hasStack ? " has-stack" : "");
-  const tx = p.initialX - p.offsetX;
-  const ty = p.initialY - p.offsetY;
   return (
     <div
       ref={localRef}
       class={cls}
-      style={{ width: `${p.width}px`, height: `${p.height}px`, transform: `translate(${tx}px, ${ty}px)` }}
+      style={{ width: `${p.width}px`, height: `${p.height}px`, transform: `translate(${p.initialX}px, ${p.initialY}px)` }}
     >
       <div class="corkboard-card__title">{basename(p.card.path)}</div>
       <div class="corkboard-card__status">{p.statusLabel}</div>

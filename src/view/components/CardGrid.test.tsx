@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/preact";
 import { CardGrid } from "./CardGrid";
 
-const inactiveDrag = { active: false, fromIndices: [], primary: null, dropTarget: null };
+const inactiveDrag = { active: false, fromIndices: [], primary: null, dropTarget: null, dropEdge: null };
 const noopDrag = {
 	onCardPointerDown: () => {},
 	onGridPointerMove: () => {},

@@ -30,8 +30,6 @@ interface PendingDrag {
 	pressY: number;        // (so the ghost mounts under the cursor, not the original click)
 	primary: number;
 	indices: number[];     // resolved at threshold-crossing, empty until then
-	offsetX: number;       // pointer offset inside the primary card at original pointerdown
-	offsetY: number;
 	cardsSnapshot: CorkboardCard[];
 }
 
@@ -48,7 +46,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 
 	const ghostElRef = useRef<HTMLDivElement | null>(null);
 	const pendingRef = useRef<PendingDrag | null>(null);
-	const ghostOffsetRef = useRef<{ ox: number; oy: number } | null>(null);
 	// Track the exact listener references we installed so removeEventListener
 	// matches them even after the component re-renders (handlers below are
 	// fresh closures every render).
@@ -83,7 +80,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 	const teardown = () => {
 		uninstallListeners();
 		pendingRef.current = null;
-		ghostOffsetRef.current = null;
 	};
 
 	const cancelDrag = () => {
@@ -91,7 +87,11 @@ export function CorkboardApp(p: CorkboardAppProps) {
 		teardown();
 	};
 
-	const findDropTargetIndex = (clientX: number, clientY: number, dragged: number[]): number | null => {
+	const findDropTarget = (
+		clientX: number,
+		clientY: number,
+		dragged: number[],
+	): { index: number; edge: "before" | "after" } | null => {
 		const elAt = document.elementFromPoint(clientX, clientY);
 		if (!elAt) return null;
 		const cardEl = elAt.closest(".corkboard-card") as HTMLElement | null;
@@ -101,7 +101,9 @@ export function CorkboardApp(p: CorkboardAppProps) {
 		const idx = gridChildren.indexOf(cardEl);
 		if (idx < 0) return null;
 		if (dragged.includes(idx)) return null;
-		return idx;
+		const rect = cardEl.getBoundingClientRect();
+		const edge: "before" | "after" = clientX < rect.left + rect.width / 2 ? "before" : "after";
+		return { index: idx, edge };
 	};
 
 	const onDocPointerMove = (evt: PointerEvent) => {
@@ -119,27 +121,23 @@ export function CorkboardApp(p: CorkboardAppProps) {
 					p.selectionStore.click(pending.primary, { meta: false, shift: false });
 				}
 				// Re-anchor press point to the current cursor so the ghost mounts
-				// under the pointer rather than at the original click position.
+				// with its top-left under the pointer.
 				pendingRef.current = {
 					...pending,
 					pressX: evt.clientX,
 					pressY: evt.clientY,
 					indices: set.indices,
 				};
-				ghostOffsetRef.current = { ox: pending.offsetX, oy: pending.offsetY };
 				p.dragStore.start(pending.primary, set.indices);
 			}
 			return;
 		}
 		if (state.active) {
-			const dropIdx = findDropTargetIndex(evt.clientX, evt.clientY, state.fromIndices);
-			if (dropIdx !== state.dropTarget) {
-				p.dragStore.setDropTarget(dropIdx);
-			}
+			const hit = findDropTarget(evt.clientX, evt.clientY, state.fromIndices);
+			p.dragStore.setDropTarget(hit?.index ?? null, hit?.edge ?? null);
 			const ghost = ghostElRef.current;
-			const offs = ghostOffsetRef.current;
-			if (ghost && offs) {
-				ghost.style.transform = `translate(${evt.clientX - offs.ox}px, ${evt.clientY - offs.oy}px)`;
+			if (ghost) {
+				ghost.style.transform = `translate(${evt.clientX}px, ${evt.clientY}px)`;
 			}
 		}
 	};
@@ -150,7 +148,14 @@ export function CorkboardApp(p: CorkboardAppProps) {
 		const dragWasActive = state.active;
 		if (dragWasActive && pending) {
 			const dropTarget = state.dropTarget;
-			const to = dropTarget == null ? p.controller.doc.data.cards.length : dropTarget;
+			const edge = state.dropEdge;
+			const cards = p.controller.doc.data.cards;
+			// reorderMany inserts items immediately BEFORE the card formerly at
+			// `to`. So edge="before" maps to to=dropTarget, edge="after" maps
+			// to to=dropTarget+1. Empty-area drop appends.
+			const to = dropTarget == null
+				? cards.length
+				: edge === "after" ? dropTarget + 1 : dropTarget;
 			const fromIndices = state.fromIndices;
 			const before = pending.cardsSnapshot;
 			p.controller.reorderMany(fromIndices, to);
@@ -186,10 +191,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 
 	const onCardPointerDown = (i: number, evt: PointerEvent) => {
 		if (evt.button !== 0) return;
-		const cardEl = (evt.target as Element | null)?.closest(".corkboard-card") as HTMLElement | null;
-		const rect = cardEl?.getBoundingClientRect();
-		const offsetX = rect ? evt.clientX - rect.left : 0;
-		const offsetY = rect ? evt.clientY - rect.top : 0;
 
 		// Do NOT mutate selection here. The click event (if no drag occurs)
 		// will handle selection through Card's onClick with proper modifier
@@ -200,8 +201,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 			pressY: evt.clientY,
 			primary: i,
 			indices: [],
-			offsetX,
-			offsetY,
 			cardsSnapshot: p.controller.doc.data.cards.slice(),
 		};
 
@@ -291,8 +290,6 @@ export function CorkboardApp(p: CorkboardAppProps) {
 					statusLabel={p.settings.statusLabels[ghostPrimary.status]}
 					initialX={pending.pressX}
 					initialY={pending.pressY}
-					offsetX={pending.offsetX}
-					offsetY={pending.offsetY}
 					ghostRef={(el) => { ghostElRef.current = el; }}
 				/>
 			)}
