@@ -32,5 +32,10 @@
 	"dependencies": {
 		"obsidian": "latest",
 		"preact": "^10.29.1"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild"
+		]
 	}
 }
