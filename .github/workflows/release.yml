@@ -26,8 +26,11 @@ jobs:
               with:
                   node-version: "24"
 
-            - name: Enable Corepack (provides pnpm via packageManager field)
-              run: corepack enable
+            # Install pnpm via the Node-bundled npm. Avoids Corepack's shim
+            # placement quirks on GitHub runners and avoids third-party
+            # actions that still target Node 20. Version is pinned in
+            # package.json (packageManager field); we just need a CLI here.
+            - run: npm install -g pnpm@10.33.2
 
             - name: Verify tag matches manifest.json version
               run: |
