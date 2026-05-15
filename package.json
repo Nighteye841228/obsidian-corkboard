@@ -20,6 +20,7 @@
 		"@testing-library/preact": "^3.2.4",
 		"@types/node": "^20.19.40",
 		"esbuild": "^0.28.0",
+		"eslint": "^9.39.4",
 		"eslint-plugin-obsidianmd": "0.1.9",
 		"globals": "14.0.0",
 		"jiti": "2.6.1",
@@ -37,5 +38,6 @@
 		"onlyBuiltDependencies": [
 			"esbuild"
 		]
-	}
+	},
+	"packageManager": "pnpm@10.33.2"
 }

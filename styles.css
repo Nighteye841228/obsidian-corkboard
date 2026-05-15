@@ -132,6 +132,11 @@
 }
 .corkboard-drag-ghost.has-stack::before { transform: translate(4px, 4px); opacity: 0.7; }
 .corkboard-drag-ghost.has-stack::after  { transform: translate(8px, 8px); opacity: 0.45; }
+.corkboard-drag-ghost .corkboard-synopsis {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 .corkboard-drag-ghost__badge {
 	position: absolute;
 	top: -6px;

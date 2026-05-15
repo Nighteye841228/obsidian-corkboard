@@ -98,7 +98,7 @@ export function CorkboardApp(p: CorkboardAppProps) {
 	): { index: number; edge: "before" | "after" } | null => {
 		const elAt = document.elementFromPoint(clientX, clientY);
 		if (!elAt) return null;
-		const cardEl = elAt.closest(".corkboard-card") as HTMLElement | null;
+		const cardEl = elAt.closest(".corkboard-card");
 		if (!cardEl || !cardEl.parentElement) return null;
 		const gridChildren = Array.from(cardEl.parentElement.children)
 			.filter(c => c.classList.contains("corkboard-card"));
@@ -145,7 +145,7 @@ export function CorkboardApp(p: CorkboardAppProps) {
 						statusLabel: p.settings.statusLabels[primaryCard.status],
 					});
 					document.body.appendChild(g);
-					g.style.transform = `translate(${evt.clientX}px, ${evt.clientY}px)`;
+					g.setCssStyles({ transform: `translate(${evt.clientX}px, ${evt.clientY}px)` });
 					ghostElRef.current = g;
 				}
 			}
@@ -156,7 +156,7 @@ export function CorkboardApp(p: CorkboardAppProps) {
 			p.dragStore.setDropTarget(hit?.index ?? null, hit?.edge ?? null);
 			const ghost = ghostElRef.current;
 			if (ghost) {
-				ghost.style.transform = `translate(${evt.clientX}px, ${evt.clientY}px)`;
+				ghost.setCssStyles({ transform: `translate(${evt.clientX}px, ${evt.clientY}px)` });
 			}
 		}
 	};

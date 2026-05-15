@@ -7,27 +7,18 @@ on:
     pull_request:
         branches: ["**"]
 
-# pnpm/action-setup@v4 still targets Node 20. This env opts it (and any
-# other Node-20-targeting actions) into the Node 24 runtime, silencing
-# the deprecation warning until pnpm/action-setup ships a Node 24 build.
-env:
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
     build:
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@v5
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10
             - name: Use Node.js
               uses: actions/setup-node@v5
               with:
-                  node-version: "22"
-                  cache: "pnpm"
+                  node-version: "24"
+            - name: Enable Corepack (provides pnpm via packageManager field)
+              run: corepack enable
             - run: pnpm install --frozen-lockfile
             - run: pnpm lint
             - run: pnpm test
