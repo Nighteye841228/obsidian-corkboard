@@ -13,6 +13,12 @@ on:
 permissions:
     contents: write
 
+# pnpm/action-setup@v4 still targets Node 20. This env opts it (and any
+# other Node-20-targeting actions) into the Node 24 runtime, silencing
+# the deprecation warning until pnpm/action-setup ships a Node 24 build.
+env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
     release:
         runs-on: ubuntu-latest
