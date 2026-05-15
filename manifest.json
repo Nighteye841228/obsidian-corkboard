@@ -1,7 +1,7 @@
 {
   "id": "corkboard",
   "name": "Corkboard",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "1.4.0",
   "description": "Scrivener-style corkboard view for Obsidian folders. Each folder gets an index.corkboard with cards for its markdown files.",
   "author": "victor",
