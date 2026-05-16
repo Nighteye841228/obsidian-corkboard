@@ -1,0 +1,84 @@
+name: Release Obsidian plugin
+
+# Trigger: pushing a SemVer-shaped tag (e.g. `0.1.0`, `1.2.3`).
+# Important: the tag MUST exactly match the `version` field in manifest.json
+# and must NOT carry a leading `v` — that's the Obsidian community plugin
+# convention. See https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin
+on:
+    push:
+        tags:
+            - "[0-9]+.[0-9]+.[0-9]+"
+            - "[0-9]+.[0-9]+.[0-9]+-*"
+
+permissions:
+    contents: write       # create GitHub release
+    id-token: write       # mint OIDC token for Sigstore signing
+    attestations: write   # store build-provenance attestations
+
+jobs:
+    release:
+        runs-on: ubuntu-24.04
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d  # v6.0.5
+              with:
+                  version: 10
+
+            - name: Use Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "pnpm"
+
+            - name: Verify tag matches manifest.json version
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  manifest_version=$(node -p "require('./manifest.json').version")
+                  if [ "$tag" != "$manifest_version" ]; then
+                      echo "::error::Tag '$tag' does not match manifest.json version '$manifest_version'"
+                      exit 1
+                  fi
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build plugin
+              run: pnpm build
+
+            - name: Confirm release artifacts exist
+              run: |
+                  test -f main.js
+                  test -f manifest.json
+                  test -f styles.css
+
+            - name: Generate build-provenance attestation
+              uses: actions/attest-build-provenance@v3
+              with:
+                  subject-path: |
+                      main.js
+                      manifest.json
+                      styles.css
+
+            - name: Create draft release with artifacts
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  notes_file=".github/release-notes/${tag}.md"
+                  if [ -f "$notes_file" ]; then
+                      gh release create "$tag" \
+                          --title="$tag" \
+                          --draft \
+                          --notes-file "$notes_file" \
+                          main.js manifest.json styles.css
+                  else
+                      gh release create "$tag" \
+                          --title="$tag" \
+                          --draft \
+                          --notes "Release $tag. Edit these notes before publishing." \
+                          main.js manifest.json styles.css
+                  fi

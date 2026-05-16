@@ -8,6 +8,10 @@ export default tseslint.config(
 		languageOptions: {
 			globals: {
 				...globals.browser,
+				// Obsidian-provided globals that point to the currently focused
+				// popout window's document/window (rather than the main one).
+				activeDocument: "readonly",
+				activeWindow: "readonly",
 			},
 			parserOptions: {
 				project: ['./tsconfig.eslint.json'],

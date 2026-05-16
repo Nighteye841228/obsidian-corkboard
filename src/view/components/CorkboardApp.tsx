@@ -70,9 +70,9 @@ export function CorkboardApp(p: CorkboardAppProps) {
 	const uninstallListeners = () => {
 		const inst = installedRef.current;
 		if (!inst) return;
-		document.removeEventListener("pointermove", inst.move);
-		document.removeEventListener("pointerup", inst.up);
-		document.removeEventListener("keydown", inst.key);
+		activeDocument.removeEventListener("pointermove", inst.move);
+		activeDocument.removeEventListener("pointerup", inst.up);
+		activeDocument.removeEventListener("keydown", inst.key);
 		window.removeEventListener("blur", inst.blur);
 		installedRef.current = null;
 	};
@@ -96,7 +96,7 @@ export function CorkboardApp(p: CorkboardAppProps) {
 		clientY: number,
 		dragged: number[],
 	): { index: number; edge: "before" | "after" } | null => {
-		const elAt = document.elementFromPoint(clientX, clientY);
+		const elAt = activeDocument.elementFromPoint(clientX, clientY);
 		if (!elAt) return null;
 		const cardEl = elAt.closest(".corkboard-card");
 		if (!cardEl || !cardEl.parentElement) return null;
@@ -132,7 +132,7 @@ export function CorkboardApp(p: CorkboardAppProps) {
 				};
 				p.dragStore.start(pending.primary, set.indices);
 				// Build the ghost as a detached DOM element and append it to
-				// document.body. Anchoring to body sidesteps `position: fixed`
+				// activeDocument.body. Anchoring to body sidesteps `position: fixed`
 				// being trapped inside a transformed Obsidian ancestor (which
 				// would offset the ghost by the leaf's own left/top).
 				const primaryCard = p.controller.doc.data.cards[pending.primary];
@@ -144,7 +144,7 @@ export function CorkboardApp(p: CorkboardAppProps) {
 						height: p.controller.doc.data.cardHeight,
 						statusLabel: p.settings.statusLabels[primaryCard.status],
 					});
-					document.body.appendChild(g);
+					activeDocument.body.appendChild(g);
 					g.setCssStyles({ transform: `translate(${evt.clientX}px, ${evt.clientY}px)` });
 					ghostElRef.current = g;
 				}
@@ -193,12 +193,12 @@ export function CorkboardApp(p: CorkboardAppProps) {
 			const suppress = (e: MouseEvent) => {
 				e.stopPropagation();
 				e.preventDefault();
-				document.removeEventListener("click", suppress, true);
+				activeDocument.removeEventListener("click", suppress, true);
 			};
-			document.addEventListener("click", suppress, true);
+			activeDocument.addEventListener("click", suppress, true);
 			// Safety: if no click fires (release outside any element), remove
 			// the listener after a frame.
-			setTimeout(() => document.removeEventListener("click", suppress, true), 0);
+			window.setTimeout(() => activeDocument.removeEventListener("click", suppress, true), 0);
 		}
 	};
 
@@ -230,9 +230,9 @@ export function CorkboardApp(p: CorkboardAppProps) {
 			key: onDocKeyDown,
 			blur: onWindowBlur,
 		};
-		document.addEventListener("pointermove", inst.move);
-		document.addEventListener("pointerup", inst.up);
-		document.addEventListener("keydown", inst.key);
+		activeDocument.addEventListener("pointermove", inst.move);
+		activeDocument.addEventListener("pointerup", inst.up);
+		activeDocument.addEventListener("keydown", inst.key);
 		window.addEventListener("blur", inst.blur);
 		installedRef.current = inst;
 	};

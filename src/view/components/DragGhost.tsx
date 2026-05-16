@@ -14,12 +14,12 @@ function basename(path: string): string {
 }
 
 // Imperative DOM ghost. Rendered outside the preact tree, appended directly
-// to document.body so its `position: fixed` is anchored to the viewport
+// to activeDocument.body so its `position: fixed` is anchored to the viewport
 // (Obsidian workspace containers apply `transform`, which would otherwise
 // trap a fixed-positioned descendant inside the leaf and offset it by the
 // leaf's own left/top).
 export function createDragGhost(p: DragGhostProps): HTMLDivElement {
-  const root = document.createElement("div");
+  const root = activeDocument.createElement("div");
   const hasStack = p.extraCount > 0;
   root.className = "corkboard-drag-ghost" + (hasStack ? " has-stack" : "");
   // Width/height/transform are per-instance dynamic values — go through
@@ -31,23 +31,23 @@ export function createDragGhost(p: DragGhostProps): HTMLDivElement {
     transform: "translate(-9999px, -9999px)",
   });
 
-  const title = document.createElement("div");
+  const title = activeDocument.createElement("div");
   title.className = "corkboard-card__title";
   title.textContent = basename(p.card.path);
   root.appendChild(title);
 
-  const status = document.createElement("div");
+  const status = activeDocument.createElement("div");
   status.className = "corkboard-card__status";
   status.textContent = p.statusLabel;
   root.appendChild(status);
 
-  const synopsis = document.createElement("div");
+  const synopsis = activeDocument.createElement("div");
   synopsis.className = "corkboard-synopsis";
   synopsis.textContent = p.card.synopsis;
   root.appendChild(synopsis);
 
   if (hasStack) {
-    const badge = document.createElement("div");
+    const badge = activeDocument.createElement("div");
     badge.className = "corkboard-drag-ghost__badge";
     badge.textContent = `+${p.extraCount}`;
     root.appendChild(badge);

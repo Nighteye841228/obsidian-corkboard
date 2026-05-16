@@ -1,8 +1,8 @@
 {
   "id": "corkboard",
   "name": "Corkboard",
-  "version": "1.0.1",
-  "minAppVersion": "1.4.0",
+  "version": "1.0.2",
+  "minAppVersion": "1.6.6",
   "description": "Scrivener-style corkboard view for folders. Each folder gets an index.corkboard with cards for its markdown files.",
   "author": "victor",
   "isDesktopOnly": true
